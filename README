@@ -1,0 +1,27 @@
+This repository contains documents, source code, and tools related to the
+embedded code in the Lucas 14CUX engine management computer.
+
+  firmware: Annotated assembly source for the 14CUX firmware itself. The goal
+            of this source repository is to provide certain features of the
+            firmware as build options, so that they may be included or excluded
+            based on user selections. Examples include the road speed limiter
+            and modifications made by Land Rover (such as the cold-start fix.)
+
+            Notes: These source modules have been formatted to be compatible
+            with CRASM (the open source Motorola cross assembler.) CRASM was
+            selected as the assembler of choice to take advantage of a number of
+            features such as local-scope labels and conditional-assembly blocks.
+            This led to the discovery of a few bugs in CRASM 1.5 that affect the
+            instructions SUBD, RTI, and MUL. Version 1.6 (or later) of CRASM is
+            required to produce correct binary output. Further stability
+            improvements were made after 1.6, so you should get the most recent
+            version if possible.
+
+     utils: Supporting utilities that perform tasks such as finalizing a
+            firmware image (by balancing its checksum) and converting a
+            Motorola s-record file to a binary image.
+
+whitepaper: LaTeX source for a document that describes in detail the design of
+            the 14CUX ECU, the programmatic flow of the 14CUX firmware, and the
+            software diagnostic protocol used over the ECU's serial port.
+
