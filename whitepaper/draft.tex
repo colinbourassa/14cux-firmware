@@ -53,7 +53,7 @@ The 14CUX was the final iteration of the system, and featured upgraded injectors
 \section {General function}
 In contrast to more modern engine management systems, the 14CUX controls fuel delivery only; it does not control spark ignition. On 14CUX-equipped vehicles, the spark control is done mechanically with the use of a distributor. Two banks of fuel injectors (with four injectors in each) are pulse-width modulated to deliver fuel. Two oxygen sensors in the exhaust can provide closed-loop feedback for fueling adjustment.
 
-When the ignition is first turned on, the ECU energizes a relay that runs the fuel pump for a short time to pressurize the fuel rail. Once the starter motor begins to turn the engine, the ECU gets a 12VDC signal that causes it to run the fuel pump again, and energize the fuel injectors. For the next several seconds, the injector pulse width is wider than normal to provide sufficient fuel for starting. Idle control is performed by adjusting a stepper-motor-driven bypass valve in the intake plenum. When the ignition is switched off, the ECU winds the bypass valve fully open to provide enough air the next time the engine is started.
+When the ignition is first turned on, the ECU energizes a relay that runs the fuel pump for a short time to pressurize the fuel rail. Once the starter motor begins to turn the engine, the ECU will begin to run the fuel pump continuously as well as actuate the fuel injectors. For the next several seconds, the injector pulse width is wider than normal to provide sufficient fuel for starting. Idle control is performed by adjusting a stepper-motor-driven bypass valve in the intake plenum. When the ignition is switched off, the ECU winds the bypass valve fully open to provide enough air the next time the engine is started.
 
 To determine the amount of fuel required by the engine, the ECU reads a number of sensors measuring the following factors:
 \begin{itemize}
@@ -103,13 +103,13 @@ Analog sensor values are digitized by a Hitachi HD46508 ADC, which has a total o
 Fuel and coolant temperature sensing is done with thermistors that are read by the ADC. The sensors have an inverse hyperbolic response to temperature, with approximately 50K$\Omega$ and 100$\Omega$ impedence representing the cold and hot ends of their operating range, respectively.
 
 \section {Tune revisions}
-During the development life of the 14CUX, a number of firmware bugfixes were applied, along with various enhancements to improve driveability and reliability. This resulted in several dozen different revisions (``tunes'') of the ROM image, which are referred with with tune numbers in the format {\em R\#\#\#} (example: Tune R2103 is described as being the ``Initial production tune'' for the low-compression-ratio Range Rover Classic 3.9.)
+During the development life of the 14CUX, a number of firmware bugfixes were applied, along with various enhancements to improve driveability and reliability. This resulted in several dozen different revisions (``tunes'') of the ROM image, which are referred to with with tune numbers in the format {\em R\#\#\#} (example: Tune R2103 is described as being the ``Initial production tune'' for the low-compression-ratio Range Rover Classic 3.9.)
 
-Notable changes between tune revisions include two iterations of a cold-weather start improvement, a fix for a spurious malfunction indicator light (MIL), a lowered detection threshold for idle speed, and the placement of fuel maps (and other data) at different offsets.
+Notable changes between tune revisions include two iterations of a cold-weather startup improvement, a fix for a spurious malfunction indicator light (MIL), a lowered detection threshold for idle speed, and an efficiency improvement for road speed sampling.
 
-The tune revision is embedded in the ROM image itself as binary-coded decimal at offset \$3FE9. Although the tune number appears to have changed with each update from Land Rover, smaller manufacturers using custom tunes (such as TVR) have been known to reuse the same tune number for images with different data.
+The tune revision number is embedded in the ROM image itself as binary coded decimal at offset \$3FE9. Although the tune number appears to have changed with each update from Land Rover, smaller manufacturers using custom tunes (such as TVR) have been known to reuse the same tune number for images with different data.
 
-In addition to the tune revision number, the ROM image contains another 16-bit value referred to in documentation as ``Ident''. It appears to have been used to further differentiate revisions of the code and data, and, like the tune revision number, it is not read or referenced by the firmware.
+In addition to the tune revision number, the ROM image contains an 8-bit value referred to in documentation as ``Ident''. It appears to have been used to further differentiate revisions of the code and data, and, like the tune revision number, it is not read or referenced by the firmware.
 
 \section {ROM image}
 The ECU's code and data occupy a 16KB ROM image. In some units, a 27C256 PROM part (with 32KB capacity) is used; in this case, the 16KB image is duplicated in the upper half of the PROM.
@@ -148,7 +148,7 @@ Each ROM contains five different fuel maps (1 through 5), which were intended fo
   \end{tabular}
  \caption{Sampling order of ADC channels \label{tab:ADCsampling}}
 \end{table*}
-When the ECU is powered on, the microprocessor reads the 16-bit reset vector at \$FFFE-FFFF. Because the 16KB ROM is mapped into memory at \$C000, the address in this reset vector is actually stored in the last two bytes of the ROM image. This address is the entry point of the code. As part of startup initialization, the processor's internal memory is cleared and its 8-bit output ports are initialized. These output ports are used for functions such as lighting the MIL and driving the fuel injector timing. Further on in the code, the reliability of the internal RAM is checked by testing a bit that gets flipped when battery power is removed from the ECU. Also, a checksum is calculated over the 20 bytes of battery-backed RAM and verified against a stored checksum.
+When the ECU is powered on, the microprocessor reads the 16-bit reset vector at \$FFFE-FFFF. Because the 16KB ROM is mapped into memory at \$C000, the address in this reset vector is actually stored in the last two bytes of the ROM image. This address is the entry point of the code. As part of startup initialization, the processor's internal memory is cleared and its 8-bit output ports are initialized. These output ports are used for functions such as lighting the MIL and driving the fuel injector timing. Further on in the code, the reliability of the internal RAM contents is checked by testing a bit that gets flipped when battery power is removed from the ECU. Also, a checksum is calculated over the 20 bytes of battery-backed RAM and verified against a stored checksum.
 
 The main executive loop reads each of the ADC channels in a round-robin pattern. This is done by reading a mux table that is populated with one entry for each of the ADC channels (see Table ~\ref{tab:ADCsampling}), plus one additional entry that acts as an end-of-list marker. The low nibble of each 8-bit mux table entry indicates the channel to read, and the MSB of each entry indicates the resolution of the sample (0 for 10-bit, 1 for 8-bit.) The values read for each ADC channel are stored at fixed memory locations, which incidentally allows an external system to monitor 14CUX sensor values by reading those memory locations via the diagnostic serial port. Note that some values (such as the main battery voltage) are immediately manipulated into a format that is more useful to the firmware; to recover the original reading, diagnostic software must reverse any calculations done on the ADC reading.
 
@@ -274,7 +274,7 @@ To maintain a stable idle, the 14CUX system uses a valve in the intake plenum th
 \section {Diagnostic display}
 For some markets, including North America, Land Rover vehicles using the 14CUX included a diagnostic box referred to as the ``Fault Code Display Unit''. This unit contains a pair of seven-segment displays used to show a single two-digit fault code. When the unit is connected to the the 14CUX wiring harness, the ECU configures the connected pins as I\textsuperscript{2}C output, and, using an internal table of fault-code priorities, sends the most important stored fault code to the display.
 
-Although the 14CUX does have a diagnostic serial port, the system was designed well before the ODB-II diagnostic standard, and therefore uses a nonstandard signalling scheme and baud rate. The port operates at 7812.5bps, with 8 data bits, no parity, 1 stop bit, and no flow control. The signal levels are at 0 and 12 VDC. Additionally, the transmit line from the ECU is inverted.
+Although the 14CUX does have a diagnostic serial port, the system was designed well before the ODB-II diagnostic standard, and therefore uses a nonstandard signalling scheme and baud rate. The port operates at 7812.5bps, with 8 data bits, no parity, 1 stop bit, and no flow control. The signal levels for the output line are at 12V and 0V, while those for the input line are 0V and 5V. Note that the levels are asymmetric, and also that the output levels are inverted with respect to the logic state.
 
 In contrast to the later OBD-II protocols, the software protocol used over the serial port is very simple; it allows reading and writing arbitrary memory locations within the processor's address space. Because the values read from various sensors are always stored at the same locations in memory, this protocol can be used to read runtime parameters from the system.
 
@@ -379,39 +379,5 @@ The series of writes to the \$9000 space were apparently important when Lucas en
 \item TODO: Hi-speed ADC mux table
 
 \end{itemize}
-
-\newpage
-\pagestyle{empty}
-
-% Define block styles
-\tikzstyle{decision} = [diamond, draw, fill=blue!20,text width=4.5em, text badly centered, node distance=3cm, inner sep=0pt]
-\tikzstyle{block} = [rectangle, draw, text width=15em,text centered,rounded corners, minimum height=4em]
-\tikzstyle{line} = [draw, -latex']
-\tikzstyle{cloud} = [draw, ellipse,fill=red!20, node distance=3cm,minimum height=2em]
-    
-\begin{tikzpicture}[node distance = 2cm, auto]
-    % Place nodes
-    \node [block] (init) {This is an expansion of the cold start fuel calculation (block 36) in the spark interrupt flow chart. A cranking but not running condition is defined by RPM less than 505 (later reduced to 375 RPM) with started-bit not set. Once bit is set, RPM can dip below this value and not reset to starting condition.};
-    \node [block, below of=init, anchor=north, node distance=4cm] (compare_ct) {Compare count from ECT sensor with value from address \$C0DB. Note that this address points to the coldest entry in the default 3x12 table and not the 3x12 of the current fuel map. For tune R3526, this value is \$EC which represents about 0 deg F.};
-    \node [decision, below of=compare_ct, node distance=4cm] (compare_ct_decision) {Colder than value at \$C0DB?};
-
-%    \node [cloud, left of=init] (expert) {expert};
-%    \node [cloud, right of=init] (system) {system};
-%    \node [block, below of=init] (identify) {identify candidate models};
-%    \node [block, below of=identify] (evaluate) {evaluate candidate models};
-%    \node [block, left of=evaluate, node distance=3cm] (update) {update model};
-%    \node [decision, below of=evaluate] (decide) {is best candidate better?};
-%    \node [block, below of=decide, node distance=3cm] (stop) {stop};
-    % Draw edges
-    \path [line] (init) -- (compare_ct);
-    \path [line] (compare_ct) -- (compare_ct_decision);
-%    \path [line] (evaluate) -- (decide);
-%    \path [line] (decide) -| node [near start] {yes} (update);
-%    \path [line] (update) |- (identify);
-%    \path [line] (decide) -- node {no}(stop);
-%    \path [line,dashed] (expert) -- (init);
-%    \path [line,dashed] (system) -- (init);
-%    \path [line,dashed] (system) |- (evaluate);
-\end{tikzpicture}
 
 \end{document}
