@@ -160,7 +160,7 @@ int main(int argc, char **argv)
             }
             else if (rev == RevB)
             {
-                printf("Image revision: Rev A (early data locations, main voltage coefficients in data segment)\n");
+                printf("Image revision: Rev B (early data locations, main voltage coefficients in data segment)\n");
                 fields = fieldsRevB;
             }
             else
