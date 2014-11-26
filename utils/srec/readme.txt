@@ -35,6 +35,7 @@ V1.30   Added binsplit
 V1.40   Fixed bin2srec ending on address 0xFFFFFFFF
 V1.41   Fixed spelling errors
 V1.42   Changed return code from srec2bin if output file fails to be created
+V1.43   Use S6 instead of S5 count record when record count is greater than 65535
 
 The utilities now compile using the free MinGW GNU based tools
 as well as GCC under Linux using Gnu Make.

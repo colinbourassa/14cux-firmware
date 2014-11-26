@@ -133,8 +133,16 @@ void process(void)
 
 	if (do_headers)
 	{
-		checksum = 3 + (record_count & 0xff) + ((record_count >> 8) & 0xff);
-		printf("S503%04X%02X\n", record_count, 255 - checksum);
+		if (record_count > 0xffff)
+		{
+			checksum = 4 + (record_count & 0xff) + ((record_count >> 8) & 0xff) + ((record_count >> 16) & 0xff);
+			printf("S604%06X%02X\n", record_count, 255 - checksum);
+		}
+		else
+		{
+			checksum = 3 + (record_count & 0xff) + ((record_count >> 8) & 0xff);
+			printf("S503%04X%02X\n", record_count, 255 - checksum);
+		}
 
 		byte_count = (addr_bytes + 1);
 		printf("S%d%02X", 11 - addr_bytes, byte_count);
