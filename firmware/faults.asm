@@ -14,10 +14,10 @@ code
 
 IF BUILD_R3360_AND_LATER
 ;------------------------------------------------------------------------------
-; These 6 mask bytes are applied to the six fault bit locations (X0049 to 4E)
-; Here, some faults can be prevented from lighting the MIL. For example, bit 7
-; in X0049 is the tune resistor fault. The value $77 masks this fault for
-; tunes that are locked to map 5.
+; These 6 mask bytes are applied to the six fault bit locations (faultBits_49
+; through faultBits_4E). Here, some faults can be prevented from lighting the
+; MIL. For example, bit 7 in faultBits_49 is the tune resistor fault. The value
+; $77 masks this fault for tunes that are locked to map 5.
 ;------------------------------------------------------------------------------
 
 .faultMasks     DB          $77, $FD, $00, $D0, $20, $C0
@@ -96,12 +96,12 @@ ENDC
 ;   The table is shown here in priorized order (as it exists in memory)
 ;------------------------------------------------------------------------------
 ;                            byte mask
-; 29 44 45 25 40 50 12 21  ; 0049 (77) ECM, O2A, O2B, MisfireA, MisfireB, MAF (25, 21 not used)
-; 34 35 36 14 17 18 19 88  ; 004A (FD) Inj-A, Inj-B, CTS, TPS, TPS, TPS, purge (35 not used)
-; 89 26 27 28 37 38 39 22  ; 004B (00) (none used)
-; 23 49 46 47 48 11 68 69  ; 004C (D0) Idle Valve, VSS, Neutral Switch (23,49,46,47,11 not used)
-; 55 56 57 58 59 15 16 66  ; 004D (20) Fuel Temp (15), all others unused
-; 67 77 78 79 40 50 02 03  ; 004E (C0) 02 & 03 only used
+; 29 44 45 25 40 50 12 21  ; 49 (77) ECM, O2A, O2B, MisfireA, MisfireB, MAF (25, 21 not used)
+; 34 35 36 14 17 18 19 88  ; 4A (FD) Inj-A, Inj-B, CTS, TPS, TPS, TPS, purge (35 not used)
+; 89 26 27 28 37 38 39 22  ; 4B (00) (none used)
+; 23 49 46 47 48 11 68 69  ; 4C (D0) Idle Valve, VSS, Neutral Switch (23,49,46,47,11 not used)
+; 55 56 57 58 59 15 16 66  ; 4D (20) Fuel Temp (15), all others unused
+; 67 77 78 79 40 50 02 03  ; 4E (C0) 02 & 03 only used
 ;------------------------------------------------------------------------------
 ; An interesting point:
 ; This data table is in BCD (binary coded decimal) so there is no difference

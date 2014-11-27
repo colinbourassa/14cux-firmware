@@ -72,34 +72,34 @@ adcRoutine11    staa        fuelTempCount       ; EFT sensor count
                 bitb        #$20                ; test X0085.5
                 beq         .LD467              ; rtn if bit is zero
                 
-                ldaa        $00A1               ; X00A1 down-counter (only used in this routine)
+                ldaa        fuelTempCounter     ; a local down-counter
                 beq         .LD47A              ; branch ahead if down-counter is zero
                 
-                dec         $00A1               ; else decrement it and return
+                dec         fuelTempCounter     ; else decrement it and return
                 rts
 ;-----------------------------------------------------------
 .LD47A          ldaa        $C0AE               ; for R3526, value is $02
-                staa        $00A1               ; store it at X00A1
-                ldx         $009F               ; value at X009F/A0 is only written in this routine
+                staa        fuelTempCounter     ; store it
+                ldx         hotFuelAdjustmment  ; only written in this routine
                 beq         .LD461              ; branch up if zero
-                dex                             ; decrement X009F/A0
-                stx         $009F               ; store it
+                dex                             ; decrement 'hotFuelAdjustmment'
+                stx         hotFuelAdjustmment  ; store it
                 rts                             ; and return
 ;-----------------------------------------------------------
                                                 ; code gets here if fuel temp is hotter than saved hot fuel temp
 .LD487          nega                            ; convert negative temp delta to positive
                 ldab        $C0AF               ; for R3526, value is $32 (48 dec)
                 mul                             ; 48 * temp_delta
-                std         $009F               ; store the 16-bit result
+                std         hotFuelAdjustmment  ; store the 16-bit result
                 subd        $C0B2               ; for R3526, value is $0780 (1920 dec)
                 bcs         .LD498              ; branch if calculated value < $0780 
                 
                 ldd         $C0B2               ; else store $0780 (this sets a limit)
-                std         $009F               ;
+                std         hotFuelAdjustmment  ;
 
 
 .LD498          ldaa        $C0AE               ; for R3526, value is $02
-                staa        $00A1               ; store it in X00A1
+                staa        fuelTempCounter     ; store it
                                                 ; fall through to rts below
 ;------------------------------------------------------------------------------
 ;    ADC Routine - O2 Sensors - Channels 12 and 15

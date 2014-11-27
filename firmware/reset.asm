@@ -98,11 +98,11 @@ reset           sei                             ; Set interrupt mask
                 ldaa        #$20                ; init ADC (S&H mode, settling time avail., no IRQ)
                 staa        AdcControlReg0      ; write ADC control reg
                 ldaa        #$87
-                staa        $0074               ; $87 is 1 of 4 stepper motor values (and the default position)
+                staa        iacvDriveValue      ; $87 is 1 of 4 stepper motor values (and the default position)
                 ldab        #$20
                 stab        $0086               ; set X0086.5 (clrd when RPM exceeds limit from fuel map)
                 ldab        #$01
-                stab        $008C               ; set X008C.0 (TP vs MAF in ICI, set for TP)
+                stab        bits_008C           ; set bits_008C.0 (TP vs MAF in ICI, set for TP)
                 
 ;----------------------------
 ; Clear external memory
@@ -120,14 +120,14 @@ reset           sei                             ; Set interrupt mask
 ; Init external memory
 ;----------------------------
                 ldaa        $C1FE               ; for R3526. value is $10
-                staa        $201D               ; this is a 1Hz startup count-down timer
+                staa        closedLoopDelay     ; this is a 1Hz startup count-down timer
                 ldaa        $C1C9               ; for R3526, value is $B2 (178 dec)
                 staa        $200A               ; used to calc fuel map load index
                 ldd	        #initialRpmLimit    ; see data file for value
                 std         rpmLimitRAM
                 ldaa        #initialRpmMargin   ; see data file for value
                 staa        $200B               ; store RPM safety margin
-                ldd         $C080               ; load map 0 mutiplier (usually $54DD)
+                ldd         $C080               ; load map 0 multiplier (usually $54DD)
                 std         $2008               ; store fuel map multiplier value
                 ldaa        $C13C               ; data value is $7A or $6E
                 staa        $200E               ; an ECT sensor threshold
@@ -138,18 +138,18 @@ reset           sei                             ; Set interrupt mask
                 ldaa        $C134               ; data value is $64 (100 dec)
                 staa        $2011               ; used to multiply throttle pot delta
                 ldd         #$8000
-                std         $2053
-                staa        $2048               ; store $80 at X2048
-                staa        $0072               ; store $80 at X0072
-                ldaa        $201F
-                oraa        #$80                ; set X201F.7 high (unused otherwise)
-                staa        $201F
+                std         stepperMtrCounter   ; reset stepperMtrCounter
+                staa        iacvVariable        ; reset iacvVariable to $80
+                staa        iacvValue1          ; store $80 at iacvValue1 (mid-point)
+                ldaa        bits_201F
+                oraa        #$80                ; set bits_201F.7 high (unused otherwise)
+                staa        bits_201F
                 ldaa        #$04
-                staa        $005D               ; inits X005D/5E to 1024 dec (throttle dir & rate)
+                staa        tpsDirectionAndRate ; $400 or 1024 decimal
                 ldaa        #$34
-                staa        $006C
+                staa        tpMinCounter        ; slows down TPmin adjustment
                 ldaa        #$64
-                staa        $203E               ; (unused)
+                staa        unusedValue         ; (unused)
                 
 ;----------------------------
 ; Check for locked map & init
@@ -215,9 +215,9 @@ reset           sei                             ; Set interrupt mask
                 std         secondaryLambdaR    ; value and the value goes positive or negative from there.
                 std         secondaryLambdaL    ;
                 stab        hiFuelTemperature   ; this tells the software when there's a hot restart
-                stab        $006F               ; this value is added to X006E but it's always zero anyway
+                stab        iacvObsolete        ; this value is added to 'iacvEctValue' but it's always zero anyway
                 ldaa        $C242               ; data value is $6C (108 dec)
-                staa        $004F               ; init X004F to $6C
+                staa        stprMtrSavedValue   ; init stprMtrSavedValue to $6C
                 
 ;----------------------------
 ; Check for locked fuel map
@@ -244,9 +244,9 @@ reset           sei                             ; Set interrupt mask
                 ldab        faultBits_4E
                 andb        #$C0                    ; clr last fault bits exc. 7:6 (Data Corrupted & RAM Fail)
                 stab        faultBits_4E
-                ldaa        $008C
+                ldaa        bits_008C
                 oraa        #$40                    ; set internal code fault indicator
-                staa        $008C
+                staa        bits_008C
                 ldaa        faultBits_4E
                 oraa        #$80                    ; <-- Set Fault Code 03 (bad battery backed checksum)
                 staa        faultBits_4E
@@ -309,22 +309,22 @@ reInitVars      ldaa        #$FF                ; init engine PW values to $FFFF
                 ldaa        #$11
                 staa        $0085               ; set X0085.4 (0 = end of ADC list)
                                                 ; set X0085.0 (1 = RPM < 505 or 375 for CWC)
-                ldd         #$00C0              ; 192 decimal
-                std         $009D               ; double inj. pulses for 192 sparks
-                clra
+                ldd         #$00C0              ; 192 decimal (double inj rate for 192 sparks)
+                std         doubleInjecterRate  ; note that this does not need to be 2-bytes
+                clra                            
                 tab
                 std         engineRPM           ; set engineRPM to zero
-                staa        $0073               ; clr X0073 (stepper mtr variable)
-                staa        $0071               ; clr X0071 (stepper mtr variable))
+                staa        iacvValue2          ; clear stepper motor variable
+                staa        iacvValue0          ; clear stepper motor variable
                 ldaa        $0087
                 anda        #$02                ; clr X0087 except bit 1
                 staa        $0087
                 ldaa        $0088
                 anda        #$9E                ; clr X0088 bits 6, 5 and 0
                 staa        $0088
-                ldaa        $008C
-                anda        #$FD                ; clr X008C.1 (delay bit for double inj. pulses)
-                staa        $008C
+                ldaa        bits_008C
+                anda        #$FD                ; clr bits_008C.1 (delay bit for double inj. pulses)
+                staa        bits_008C
                 ldaa        #$32                ; init X0069 to $32 (MAF based adj. value)
                 staa        $0069
                 ldd         $C1FC               ; data value is $00C8 (200 dec)
@@ -333,24 +333,24 @@ reInitVars      ldaa        #$FF                ; init engine PW values to $FFFF
                 ldd         #$FFFF
                 std         $2017               ; right value (2017) = -1, left value (2018) = -1
                 ldd         $C7C8               ; value is $EA60 (60000)
-                std         $2042               ; this value is used by throttle pot routine
+                std         throttlePotCounter
                 ldaa        #$01
                 staa        $2045               ; X2045 is unused
-                ldaa        $2038
-                anda        #$7F                ; clr X2038.7 (also unused) 
-                staa        $2038
+                ldaa        bits_2038
+                anda        #$7F                ; clr bits_2038.7 (also unused) 
+                staa        bits_2038
                 ldaa        $008B
                 anda        #$DF                ; clr X008B.5 (throttle closing bit)
                 staa        $008B
-                ldaa        $205B
-                anda        #$7F                ; clr X205B.7 (TPS routine, controls 1-time code)
-                staa        $205B
+                ldaa        bits_205B
+                anda        #$7F                ; clr bits_205B.7 (TPS routine, controls 1-time code)
+                staa        bits_205B
                 ldd         $C240               ; value is $0032 (50 dec)
-                std         $204B               ; init X204B to $0032
-                ldaa        $2059
-                anda        #$9F                ; clr X2059.6 and X2059.5 (related ICI bits?)
-                staa        $2059
-                clr         $205C               ; used at start of ICI
+                std         rpmIndicatorDelay   ; init rpmIndicatorDelay to $0032
+                ldaa        bits_2059
+                anda        #$9F                ; clr bits_2059.6 and bits_2059.5 (related ICI bits?)
+                staa        bits_2059
+                clr         iciStartupCounter     ; used at start of ICI
                 rts
 ;------------------------------------------------------------------------------
                 

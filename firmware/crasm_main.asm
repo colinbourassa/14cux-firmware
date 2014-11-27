@@ -9,12 +9,14 @@
 ;   enable a binary comparison with the original file in order to validate
 ;   our code rebuild.
 ;
+;   29-Mar-2014     Relocated RPM table to end of data section file and 
+;                   deleted separate RPM table file.
+;
 ;------------------------------------------------------------------------------
 
 include registers.asm
-include data.asm
+include data.asm            ; RPM table is now included in data section file
 include ramLocations.asm
-include rpmTable.asm
 include mpy16.asm
 include reset.asm
 include mainLoop.asm

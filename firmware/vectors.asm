@@ -12,7 +12,6 @@
 ;
 ;------------------------------------------------------------------------------
 
-
                 DS          $FFE0-*,$FF         ; fill from wherever we left off at the
                                                 ; end of the code section
 

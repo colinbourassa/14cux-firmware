@@ -51,9 +51,10 @@ keepAlive       ldaa        port1data
 ;   cleared by other code eventually so that the ICI can again be triggered.
 ;   This actually looks like a coding error.
 ;
-;   The routine increments X2001 and X00B2 every time the TOF is set (65 mSec).
-;   X00B2 is used for measurement of the ICI period (for engine speed)
-;   X2001 is used for periodic processing in the road speed routine
+;   The routine increments 'timerOverflow1' and 'timerOverflow2' every time
+;    the TOF is set (65 mSec).
+;   .timerOverflow1' is used for measurement of the ICI period (for engine speed)
+;   'timerOverflow2' is used for periodic processing in the road speed routine
 ;
 ;   Note that reading CSR and then counterhigh will clear TOF
 ;
@@ -66,15 +67,15 @@ LF0D5           cli                             ; clear interrupt mask
                 bita        #$20                ; test timer overflow flag (TOF)
                 beq         .LF0EE              ; branch ahead if no overflow
 
-                inc         $2001               ; overflow, so increment both overflow counters
+                inc         timerOverflow2      ; overflow, so increment both overflow counters
                 bne         .LF0E7              ;
-                dec         $2001               ;
+                dec         timerOverflow2      ;
 
 
-.LF0E7          ldaa        $00B2               ;
+.LF0E7          ldaa        timerOverflow1      ;
                 inca                            ;
                 beq         .LF0EE              ;
-                staa        $00B2               ;
+                staa        timerOverflow1      ;
 
 
 .LF0EE          ldd         counterHigh         ; clear TOF and return counter value
@@ -140,8 +141,8 @@ LF0FC           pshx                            ; push X
 .LF103          addb        #$02                ; B is now #$02
                 ldx         #$0000              ; clear index reg
                 abx                             ; add B to X (X is now $0002)
-                ldab        $008D               ; bits value
-                bitb        #$71                ; test 4 bits in X008D (bits 6,5,4,0)
+                ldab        bits_008D           ; bits value
+                bitb        #$71                ; test 4 bits in bits_008D (bits 6,5,4,0)
                 pulb                            ; restore original AB value (does not affect zero flag)
                 beq         .LF113              ; branch if all 4 bits are zero
                 
@@ -214,33 +215,34 @@ ENDC
 ;         table. The initial value range is about $06 to $2D ($44 for TVR and
 ;         other markets).
 ;
-; X2020 - This is an additional left bank specific value which is initialized
-;         from the data value at XC1FF. This value is usually $03.
+; startupTimerEven -This is an additional even (right) bank specific value which
+;                   is initialized from the data value at XC1FF. This value is
+;                   usually $03.
 ;
 ; Both of these value are used for temporary additional fuel at startup.
 ;
-; The variable X0084 is used exclusively by this routine to maintain the timer
-; and is comparable to X201E which is used in Countdown Timer 2 (below).
+; The variable timer1value is used exclusively by this routine to maintain the timer
+; and is comparable to timer2Value which is used in Countdown Timer 2 (below).
 ;
 ;------------------------------------------------------------------------------
-LF135           ldaa        $0084               ; load timer maintenance variable
+LF135           ldaa        timer1value         ; load timer maintenance variable
                 ldab        ignPeriodFiltered   ; MSB is worth 512 uSec per count
                 lsrb
                 lsrb                            ; div by 4 (now 2.048 mSec/count)
                 incb                            ; add 1 (an adjustment factor?)
                 sba                             ; subtract B from A
-                bcc         .LF14E              ; branch if result < X0084
+                bcc         .LF14E              ; branch if result < timer1value
                 
                 ldab        $0088
                 eorb        #$08                ; toggle X0088.3
                 stab        $0088
-                bitb        #$08                ; test X201F.0
+                bitb        #$08                ; test X0088.3
                 beq         .LF14B              ; branch ahead every other time
                 
-                dec         $00,x               ; decrement indexed value (X009C or X2020)
+                dec         $00,x               ; decrement indexed value
 .LF14B          ldaa        $C0F4               ; $96 for R3526, $FF for TVR
 
-.LF14E          staa        $0084               ; store maintenance variable
+.LF14E          staa        timer1value         ; store maintenance variable
                 rts                             ; and return
                 
 ;------------------------------------------------------------------------------
@@ -250,33 +252,34 @@ LF135           ldaa        $0084               ; load timer maintenance variabl
 ; two following variables at a rate of approximately 1 Hz. The variable's
 ; address is passed into the routine in X (the index register).
 ;
-; X201D - This variable appears to prevent closed loop until it times out. It's
-;         initialized from the value in XC1FE which is usually $10.
+; closedLoopDelay - This variable appears to prevent closed loop until it times
+;                   out. It's initialized from the value in XC1FE (usually $10).
 ;
-; X2021 - This is the right bank equivalent to X2020 mentioned in Timer 1 above.
+; startupTimerOdd - This is the odd (left) bank equivalent to startupTimerEven
+;                   which is serviced in Timer 1 above.
 ;
-; The variable X201E is used exclusively by this routine to maintain the timer
-; and is comparable to X0084 which is used in Countdown Timer 1 (above).
+; The variable timer2Value is used exclusively by this routine to maintain the
+; timer and is comparable to timer1value which is used in Countdown Timer 1 (above).
 ;
 ;------------------------------------------------------------------------------
-LF151           ldaa        $201E               ; load timer maintenance variable
+LF151           ldaa        timer2Value         ; load timer maintenance variable
                 ldab        ignPeriodFiltered   ; MSB is worth 512 uSec per count
                 lsrb
                 lsrb                            ; div by 4 (now 2.048 mSec/count)
                 incb                            ; add 1 (an adjustment factor?)
                 sba                             ; subtract B from A
-                bcc         .LF16D              ; branch if result < X201E
+                bcc         .LF16D              ; branch if result < timer2Value
                 
-                ldab        $201F
-                eorb        #$01                ; toggle X201F.0
-                stab        $201F
-                bitb        #$01                ; test X201F.0
+                ldab        bits_201F
+                eorb        #$01                ; toggle bits_201F.0
+                stab        bits_201F
+                bitb        #$01                ; test bits_201F.0
                 beq         .LF16A              ; branch ahead every other time
                 
-                dec         $00,x               ; decrement indexed value (X201D or X2021)
+                dec         $00,x               ; 'closedLoopDelay' or 'startupTimerOdd'
 .LF16A          ldaa        $C0F4               ; $96 for R3526, $FF for TVR
 
-.LF16D          staa        $201E               ; store maintenance variable
+.LF16D          staa        timer2Value         ; store maintenance variable
                 rts                             ; and return
                 
 ;------------------------------------------------------------------------------
@@ -310,15 +313,15 @@ LF171           psha                            ; push MSB
 ;------------------
 ; Right Bank
 ;------------------
-                ldaa        $0089               ; load bits value
-                bita        #$10                ; test X0089.4
+                ldaa        bits_0089           ; load bits value
+                bita        #$10                ; test bits_0089.4
                 beq         .LF1AB              ; if zero, branch to pull A and return
                 bra         .LF18A              ; 
 ;------------------
 ; Left Bank
 ;------------------
-.LF184          ldaa        $0089               ; load bits value
-                bita        #$20                ; test X0089.5
+.LF184          ldaa        bits_0089           ; load bits value
+                bita        #$20                ; test bits_0089.5
                 beq         .LF1AB              ; if zero, branch to pull A and return
 
 .LF18A          pshb                            ; push B to stack
@@ -358,7 +361,7 @@ LF171           psha                            ; push MSB
 ; First, the signed counters at X0094 or X0095 are checked and, if zero, the
 ; routine simply returns.
 ;
-; The bits value X00A8 is only used here. Just X00A8.7 and X00A8.0 are used.
+; bits_00A8 is only used here. Just bits 7 and 0 are used.
 ;
 ;------------------------------------------------------------------------------
 LF1AD           ldaa        $0088               ; test bank indicator bit
@@ -370,30 +373,30 @@ LF1AD           ldaa        $0088               ; test bank indicator bit
                 ldaa        $0095               ; right bank signed counter
                 beq         .LF1D3              ; return if X0095 is zero
                 inx                             ; rich: X0090, lean: X008E (increment to LSB of values)
-                ldaa        $00A8               ; load bits value
+                ldaa        bits_00A8           ; load bits value
                 asra                            ; shift lsb into carry
-                bcs         .LF1CD              ; branch if carry set (if X00A8.0 was 1)
+                bcs         .LF1CD              ; branch if carry set (if bits_00A8.0 was 1)
                 sec                             ; set carry
                 rola                            ; rotate left (this restores the original value)
-                bra         .LF1CF              ; branch to mask all unused bits in X00A8 and return
+                bra         .LF1CF              ; branch to mask all unused bits in bits_00A8 and return
 ;------------------
 ; Left Bank
 ;------------------
 .LF1BF          ldaa        $0094               ; left bank signed counter
                 beq         .LF1D3              ; return if X0094 is zero
-                ldaa        $00A8               ; load bits value
-                bmi         .LF1CB              ; branch ahead if X00A8.7 is set
-                oraa        #$80                ; set X00A8.7
-                bra         .LF1CF              ; branch to mask all unused bits in X00A8 and return
+                ldaa        bits_00A8               ; load bits value
+                bmi         .LF1CB              ; branch ahead if bits_00A8.7 is set
+                oraa        #$80                ; set bits_00A8.7
+                bra         .LF1CF              ; branch to mask all unused bits in bits_00A8 and return
 
-.LF1CB          anda        #$01                ; clear X00A8.7
+.LF1CB          anda        #$01                ; clear bits_00A8.7
 
 .LF1CD          inc         $00,x               ; increment indexed value
 ;----------------------------
 ; Mask unused bits and return
 ;----------------------------
 .LF1CF          anda        #$81
-                staa        $00A8
+                staa        bits_00A8
 .LF1D3          rts
 
 ;------------------------------------------------------------------------------
@@ -423,7 +426,7 @@ LF1D4           ldd         mafDirectHi
                 bcs         .LF21D
                 bra         .LF221
 ;maybeUnused6:
-                ldab        $0072
+                ldab        iacvValue1          ; value is 128 +/-
                 bpl         .LF1FE
                 andb        #$7F
                 aba
@@ -432,12 +435,12 @@ LF1D4           ldd         mafDirectHi
                 bra         .LF207
 
 .LF1FE          ldab        #$80
-                subb        $0072
+                subb        iacvValue1
                 sba
                 bcc         .LF207
                 ldaa        #$00
 
-.LF207          ldab        $004F
+.LF207          ldab        stprMtrSavedValue
                 bpl         .LF214
                 andb        #$7F
                 aba
@@ -446,12 +449,12 @@ LF1D4           ldd         mafDirectHi
                 bra         .LF21D
 
 .LF214          ldab        #$80
-                subb        $004F
+                subb        stprMtrSavedValue
                 sba
                 bcc         .LF21D
                 ldaa        #$00
 
-.LF21D          suba        $00AD
+.LF21D          suba        iacvAdjustSteps
                 bcc         .LF223
 
 .LF221          ldaa        #$01

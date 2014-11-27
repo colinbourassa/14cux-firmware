@@ -61,7 +61,7 @@ purgeValveInt   ldaa        timerCSR            ; OCF2 flag is reset by reading 
                 std         ocr2high
                 rti
 
-.LDB24          ldaa        port1data           ; if here, X00E2.4 is set OR X0096 is < 4000
+.LDB24          ldaa        port1data           ; if here, X00E2.4 is set OR 'purgeValveTimer' is < 4000
                 oraa        #$02                ; set P1.1 to turn purge valve OFF
 
 .LDB28          staa        port1data

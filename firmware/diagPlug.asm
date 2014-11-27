@@ -40,7 +40,7 @@ adcRoutine14    ldab        $0086
                 
                 bita        #$01            ; test 00DD.0
                 bne         .LD4DC          ; if bit is set, branch to check for errors
-                clr         $202A           ; clear up-counter (used for delay)
+                clr         obddDelayCounter ; clear up-counter (used for delay)
 
 .LD4BF          rts                         ; code rtns from here if no display or display already updated
 ;--------------------------------------------------------------
@@ -49,11 +49,11 @@ adcRoutine14    ldab        $0086
                 bitb        #$40            ; test P1.6 (fuel pump relay)
                 beq         .LD4D5          ; branch ahead if low (fuel pump ON)
                 
-                ldab        $202A
+                ldab        obddDelayCounter
                 incb                        ; increment delay counter
                 beq         .LD4D0          ; branch ahead if counter wraps to zero
                 
-                stab        $202A
+                stab        obddDelayCounter
                 rts                         ; if here, delay is still active, so return
 ;--------------------------------------------------------------
                                             ; branches here after delay (when counter wraps)
@@ -70,7 +70,7 @@ adcRoutine14    ldab        $0086
                                                 ; branches here if X00DD.0 is high
 .LD4DC          clrb
                 ldx     #(faultBits_49 - 1)     ; this loop checks for fault bits
-                                                ; (scans X0049 thru X004E for non-zero values)
+                                                ; (scans the 6 fault bytes for non-zero values)
 .LD4E0          inx                             ; * Start Loop *
                 ldaa        $00,x
                 bne         .LD4EC              ; branch ahead if fault found (non-zero)

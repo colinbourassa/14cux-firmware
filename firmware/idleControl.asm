@@ -96,8 +96,8 @@ idleControl     ldd         baseIdleSetting
 ;-----------------------------------------------------------	
 ; Compare target idle against actual engine RPM
 ;-----------------------------------------------------------	                                                ; *** start new code
-                ldaa        $2059               ; bits value
-                bita        #$10                ; test 2059.4 (stepper motor or idle related)
+                ldaa        bits_2059
+                bita        #$10                ; test bits_2059.4 (stepper motor or idle related)
                 beq         .LD657              ; branch ahead if bit is low
                 ldd         $00CE               ; load current idle speed target
                 subd        engineRPM
@@ -105,11 +105,12 @@ idleControl     ldd         baseIdleSetting
                                                 ; if here, idle is lower than target
                 subd        $C7D8               ; value is 100 decimal (subtract additional 100 from result)
                 bcs         .LD657              ; branch ahead if eng speed is LT target by less than 100
-                clr         $00B3               ; clr idle speed delta if GT 100 RPM??
+                clr         idleSpeedDelta      ; clr idle speed delta if GT 100 RPM??
 ;-----------------------------------------------------------	
-; This is the calculation of the coolant based value at
-; X006E. This code is similar to the separate subroutine
-; that was added later at XF9A1.
+; This is the calculation of 'iacvEctValue'. This is a
+; coolant temperature based value that has something to do
+; with idle control. This code is similar to the separate
+; subroutine that was added later at XF9A1.
 ;-----------------------------------------------------------	
 .LD657          ldx         #$C17B              ; coolant temperature table
                 ldaa        coolantTempCount
@@ -132,7 +133,7 @@ idleControl     ldd         baseIdleSetting
                 nega
 
 .LD675          tab
-                stab        $006E               ; store calculated coolant temp related value
+                stab        iacvEctValue        ; store calculated coolant temp related value
 ;-----------------------------------------------------------	
 ; Check some things to see if idle control is needed.
 ;-----------------------------------------------------------	
@@ -176,16 +177,16 @@ IF BUILD_R3360_AND_LATER
 ELSE
                 bcc         .LD6B9A             ; rtn if neutral switch is GT $B3 (in park for RR)
 ENDC                
-                ldab        $2004
+                ldab        bits_2004
                 orab        #$02                ; set 2004.1 when middle voltage at neutral switch (manual tranny?)
-                stab        $2004
+                stab        bits_2004
 
 IF BUILD_R3360_AND_LATER
 .LD6B9          rts
 ELSE
-.LD6B9		    ldaa	    $201F
-		        anda	    #$DF                ; clear X201F.5
-		        staa	    $201F
+.LD6B9		    ldaa	    bits_201F
+		        anda	    #$DF                ; clear bits_201F.5
+		        staa	    bits_201F
 		        
 .LD6B9A         rts		        
 ENDC
@@ -207,7 +208,7 @@ ENDC
                 bcc         .LD6D9              ; branch ahead if coolant temp is GT (cooler than) $23
 
 .LD6CE          ldx         $C0B0               ; for 3360, value is #0002
-                ldd         $009F               ; related to fuel temp (stayed zero for RTs)
+                ldd         hotFuelAdjustmment
 
 .LD6D3          dex
                 beq         .LD6DA              ; this loops and does one asld (it's probably zero anyway)
@@ -229,18 +230,18 @@ ENDC
 .LD6ED          adda        $C15D               ; value is $20
                 staa        $00C8
 
-                ldaa        $006E               ; calc value based on coolant temp (100 -> 160)
-                ldab        $004F               ; load battery backed value
-                bpl         .LD701              ; branch forward if 004F.7 is zero
-                                                ; X004F is neg
+                ldaa        iacvEctValue        ; calc value based on coolant temp (100 -> 160)
+                ldab        stprMtrSavedValue   ; load battery backed value
+                bpl         .LD701              ; branch forward if stprMtrSavedValue.7 is zero
+                                                ; stprMtrSavedValue is neg
                 andb        #$7F                ; clr bit 7
                 aba                             ; add B to A
                 bcc         .LD70A
                 ldaa        #$FF                ; limit value to $FF
                 bra         .LD70A
-                                                ; X004F is pos
+                                                ; stprMtrSavedValue is pos
 .LD701          ldab        #$80
-                subb        $004F
+                subb        stprMtrSavedValue
                 sba                             ; subtract B from A
                 bcc         .LD70A
                 ldaa        #$00
@@ -272,9 +273,9 @@ ENDC
                 ldaa        $0087
                 oraa        #$04                ; set 0087.2 (stays set for both RTs, probably for 1-time code)
                 staa        $0087
-                ldaa        $2059
-                oraa        #$08                ; set 2059.3
-                staa        $2059
+                ldaa        bits_2059
+                oraa        #$08                ; set bits_2059.3
+                staa        bits_2059
 
 .LD73C          rts
 ;------------------------------------------------------------------------------
@@ -283,7 +284,7 @@ ENDC
                                                 ; dest of a jmp above
 .LD73D          ldaa        iacMotorStepCount
                 bne         .LD73C              ; return if not zero
-                ldab        $00AE               ; (1 of 5) zero for D90, high & low (or signed) numbers for RR
+                ldab        iacvWorkingValue    ; (1 of 5) zero for D90, high & low (or signed) numbers for RR
                 ldaa        $00DD
                 bita        #$04                ; test 00DD.2 (related to heated screen?)
                 bne         .LD756
@@ -291,14 +292,14 @@ ENDC
                 bne         .LD761
                 oraa        #$02                ; set  00DD.1
                 staa        $00DD
-                addb        $C1EB               ; value is $08, add to 00AE value
+                addb        $C1EB               ; value is $08, add to 'iacvWorkingValue'
                 bra         .LD761
 
 .LD756          bita        #$02                ; test 00DD.1
                 bne         .LD761
                 oraa        #$02                ; set  00DD.1
                 staa        $00DD
-                subb        $C1EB               ; value is $08, subtract from 00AE value
+                subb        $C1EB               ; value is $08, subtract from 'iacvWorkingValue'
 
 .LD761          ldaa        $008A
                 bita        #$08                ; test 008A.3 (possibly A/C related)
@@ -307,7 +308,7 @@ ENDC
                 bne         .LD772
                 oraa        #$04                ; set 008A.2
                 staa        $008A
-                subb        $C157               ; value is $1A (26d), subtract from 00AE value
+                subb        $C157               ; value is $1A (26d), subtract from 'iacvWorkingValue'
 
 .LD772          bra         .LD77F
 
@@ -315,7 +316,7 @@ ENDC
                 bne         .LD77F
                 oraa        #$04                ; set 008A.3
                 staa        $008A
-                addb        $C157               ; value is $1A (26d), add to 00AE value
+                addb        $C157               ; value is $1A (26d), 'add to iacvWorkingValue'
 
 .LD77F          bita        #$20                ; test 008A.5 (neutral switch?)
                 bne         .LD78F
@@ -334,13 +335,13 @@ ENDC
                 subb        $00C9               ; value is still 5 ?
                 psha
                 ldaa        $C7DA               ; val is $18 (24d)
-                staa        $00B3               ; idle speed adjustment
-                ldaa        $2059
-                anda        #$EF                ; clr 2059.4 (stepper mtr or idle related bit)
-                staa        $2059
+                staa        idleSpeedDelta
+                ldaa        bits_2059
+                anda        #$EF                ; clr bits_2059.4 (stepper mtr or idle related bit)
+                staa        bits_2059
                 pula
 
-.LD7A8          stab        $00AE               ; (2 of 5)
+.LD7A8          stab        iacvWorkingValue    ; (2 of 5)
                 clrb
                 bita        #$08
                 bne         .LD7B2
@@ -355,16 +356,16 @@ ENDC
                 beq         .LD7C1
                 addb        $C1EB               ; value is $08
 
-.LD7C1          stab        $00AD               ; values 0, 5, 26 and 31 (only written here)
-                ldab        $2047
+.LD7C1          stab        iacvAdjustSteps     ; values 0, 5, 26 and 31 (only written here)
+                ldab        bits_2047
                 ldaa        ignPeriod
                 cmpa        $C16F               ; value is $53 (353 RPM)
                 bcc         .LD7D2              ; branch ahead if engine PW is GT $5300 (RPM < 353)
                 orab        #$20
-                stab        $2047               ; set  2047.5 (indicates eng RPM GT 350)
+                stab        bits_2047           ; set  bits_2047.5 (indicates eng RPM GT 350)
 
 .LD7D2          ldaa        $0085               ; bits
-                bitb        #$20                ; test 2047.5 (indicates eng RPM GT 350)
+                bitb        #$20                ; test bits_2047.5 (indicates eng RPM GT 350)
                 beq         .LD805              ; branch down if eng RPM LT 350 (eng not running)
                 bita        #$20                ; test 0085.5
                 bne         .LD7F0
@@ -377,28 +378,28 @@ ENDC
                 oraa        #$04                ; set 0088.2
                 staa        $0088
                 ldaa        $C151               ; val is $32 (50 decimal)
-                staa        $00B3               ; idle speed adjustment
+                staa        idleSpeedDelta
                 rts
 ;------------------------------------------------------------------------------
-; Only path here is LD7DA (above), X0075 is zero to get here
+; Only path here is LD7DA (above), iacMotorStepCount is zero to get here
 ;------------------------------------------------------------------------------
                                                 ; only branched to from D7DA above (0085 is in A)
-.LD7F0          ldab        $00B4               ; (1 of 3) load counter (often cycles 5 -> 0)
+.LD7F0          ldab        idleSpeedCounter    ; (1 of 3) load counter (often cycles 5 -> 0)
                 beq         .LD7F9
-                dec         $00B4               ; (2 of 3) decrement counter
+                dec         idleSpeedCounter    ; (2 of 3) decrement counter
                 bra         .LD805
 
-.LD7F9          ldab        $00B3               ; <- when counter is zero. B3 = idle speed adjustment
+.LD7F9          ldab        idleSpeedDelta      ; <- when counter is zero
                 beq         .LD805
                 decb
-                stab        $00B3               ; decrement idle speed adjustment
+                stab        idleSpeedDelta      ; decrement
                 ldab        $C14F               ; val is $05
-                stab        $00B4               ; (3 of 3) reset counter to 5
+                stab        idleSpeedCounter    ; (3 of 3) reset counter to 5
 
                                                 ; only from D7D6, D7F7 or fall thru
 .LD805          psha
                 ldaa        $008A
-                ldab        $00AE               ; (3 of 5)
+                ldab        iacvWorkingValue    ; (3 of 5)
                 beq         .LD81B
                 bpl         .LD813
                 negb
@@ -412,7 +413,7 @@ ENDC
                 pula
                 rts
 ;------------------------------------------------------------------------------
-; Only path here is LD80A (above) when X00AE is zero
+; Only path here is LD80A (above) when 'iacvWorkingValue' is zero
 ;------------------------------------------------------------------------------
 
 .LD81B          pula                            ; pull value from 0085 (bits)
@@ -420,11 +421,11 @@ ENDC
                 beq         .LD827              ; rtn if zero
                 ldab        $0086               ; bits value
                 bmi         .LD828              ; branch to next section if 0086.7 is one
-                clr         $00C0               ; else, clr X00C0 and rtn
+                clr         idleRelatedValue    ; else, clr 'idleRelatedValue' and rtn
 
 .LD827          rts
 ;------------------------------------------------------------------------------
-; Only path here is D822 (above). Conditionally increments 00B5/B6
+; Only path here is D822 (above). Conditionally increments 'idleControlValue'
 ;------------------------------------------------------------------------------
 
 .LD828          clr         $00CC
@@ -434,39 +435,40 @@ ENDC
                 ldaa        $008B
                 anda        #$01                ; isolate 008B.0 (road speed GT 4)
                 bne         .LD827              ; branch to return if road speed is GT 4
-                ldx         $00B5               ; 00B5/B6 starts at -20 and varies to +59
-                beq         .LD83F              ; branch to continue if 00B5/B6 is zero
+                ldx         idleControlValue    ; starts at -20 and varies to +59
+                beq         .LD83F              ; branch to continue if idleControlValue is zero
                 inx                             ; else increment it and return
-                stx         $00B5
+                stx         idleControlValue
                 rts
 ;------------------------------------------------------------------------------
 ; Two paths here:  D82F and D839 (above)
 ;------------------------------------------------------------------------------
 
-.LD83F          tst         $00B3               ; idle speed adjustment (value is between zero and 40)
+.LD83F          tst         idleSpeedDelta      ; idle speed adjustment (value is between zero and 40)
                 bne         .LD827              ; if non-zero, branch up to return
                 ldd         $00CE               ; still current idle speed target
                 subd        engineRPM
                 bcc         .LD88E              ; if RPM is LT target, branch down to other section
-                ldaa        $0073               ; zero for D90, for RR: zero with 4s and 10s (stepper mtr rel.)
-                beq         .LD866              ; if 0073 is zero, branch ahead
+                ldaa        iacvValue2          ; zero for D90, for RR: zero with 4s and 10s
+                beq         .LD866              ; if iacvValue2 is zero, branch ahead
+                
                 ldaa        $C161               ; value is 0A
                 suba        $C164               ; value is 06
-                staa        $0073               ; this is where the 4 comes from
-                jsr         LEE12               ; deals with 0073 and iacMotorStepCount
-                clr         $0073               ; zero for D90, for RR: zero with 4s and 10s (stepper mtr rel.)
+                staa        iacvValue2          ; this is where the 4 comes from
+                jsr         LEE12               ; deals with iacvValue2 and iacMotorStepCount
+                clr         iacvValue2          ; 
                 ldaa        $C164               ; value is 06
-                staa        $0071               ; occasionally init to 6 and decremented to zero        ;
+                staa        iacvValue0          ; occasionally init to 6 and decremented to zero        ;
                 ldab        $C165               ; value is $14
                 bra         .LD880
 
-.LD866          ldaa        $0071               ; occasionally init to 6 and decremented to zero
+.LD866          ldaa        iacvValue0
                 beq         .LD88E
                 ldab        $0087
                 bitb        #$40                ; test 0087.6 (eng RPM GT theshold)
                 bne         .LD883
                 deca
-                staa        $0071               ; occasionally init to 6 and decremented to zero
+                staa        iacvValue0
                 ldaa        $008A
                 oraa        #$01                ; set 008A.0 (stepper mtr direction bit, 1 = close)
                 staa        $008A
@@ -474,16 +476,16 @@ ENDC
                 staa        iacMotorStepCount
                 ldab        $C166               ; value is 0x0C in 3360 code
 
-.LD880          stab        $00B3               ; idle speed adjustment
+.LD880          stab        idleSpeedDelta      ; idle speed adjustment
 
 .LD882          rts
 ;------------------------------------------------------------------------------
 ; Only path here is D86E above (eng RPM > threshold)
 ;------------------------------------------------------------------------------
 
-.LD883          staa        $0073               ; zero for D90, for RR: zero with 4s and 10s (stepper mtr rel.)
-                jsr         LEE12               ; deals with 0073 and iacMotorStepCount
-                clr         $0071               ; occasionally init to 6 and decremented to zero
+.LD883          staa        iacvValue2
+                jsr         LEE12               ; deals with iacvValue2 and iacMotorStepCount
+                clr         iacvValue0
                 jmp         .LD9D7
 ;------------------------------------------------------------------------------
 
@@ -491,8 +493,8 @@ ENDC
                 anda        #$01                ; isolate 008B.0 (road speed GT 4)
                 bne         .LD882              ; branch up to rts if road speed is GT 4 KPH
 
-                ldaa        $0089               ; if here, road speed is low
-                bmi         .LD882              ; rtn if 0089.7 is set
+                ldaa        bits_0089           ; if here, road speed is low
+                bmi         .LD882              ; rtn if bits_0089.7 is set
                 ldd         ignPeriod
                 subd        $C253               ; for 3360 code, value is $118B (1670 RPM)
                 bcs         .LD882              ; branch up (to rts) if PW is LT $118B (RPM > 1670)
@@ -501,26 +503,26 @@ ENDC
                 ldaa        iacMotorStepCount
                 bne         .LD882              ; rtn if iacMotorStepCount is not zero
 
-                ldaa        $2047
-                bita        #$01                ; test 2047.0 (is this the idle mode bit??)
+                ldaa        bits_2047
+                bita        #$01                ; test bits_2047.0 (is this the idle mode bit??)
                 bne         .LD8FC              ; branch way down if bit is set
                 oraa        #$01                ; else, set bit
-                staa        $2047
+                staa        bits_2047
 
 ;-----------------------------------------------------------
-;		Calculate Value at 204F/50
+;		Calculate 16-bit 'mafVariable'
 ;
 ; (same as code near CC8A)
-; this code executes once every time 2047.0 is set and has
-; to do with idle air control fault
+; this code executes once every time bits_2047.0 is set and
+; has to do with idle air control fault
 ;-----------------------------------------------------------
-                ldaa        $2048               ; initial (middle) value is 128
-                cmpa        #$80                ; 2048 may be for idle air control fault
+                ldaa        iacvVariable        ; initial (middle) value is 128
+                cmpa        #$80                ; iacvVariable may be for idle air control fault
                 bcc         .LD8DD
 
 ;-------------------------------------        ; the code below is similar to something seen elsewhere
-                ldaa        #$80                ; if 2048 is LT 128
-                suba        $2048
+                ldaa        #$80                ; if iacvVariable is LT 128
+                suba        iacvVariable
                 ldab        $C25C               ; value is 08
                 mul
                 std         $00C8
@@ -540,10 +542,10 @@ ENDC
                 bcc         .LD8D8
                 ldd         #$0000
 
-.LD8D8          std         $204F               ; <-- write 204F here (varies around 600 to 1400)
+.LD8D8          std         mafVariable         ; write mafVariable (varies around 600 to 1400)
                 bra         .LD8FC
 ;-------------------------------------
-                                                ; if 2048 is GTE 128
+                                                ; if iacvVariable is GTE 128
 .LD8DD          suba        #$80
                 ldab        $C25C               ; value is 08
                 mul
@@ -564,14 +566,14 @@ ENDC
                 bcc         .LD8F9
                 ldd         #$FFFF
 
-.LD8F9          std         $204F               ; <-- write 204F here (varies around 600 to 1400)
+.LD8F9          std         mafVariable         ; store mafVariable (varies around 600 to 1400)
 ;-------------------------------------
 ; end idle air control fault code
 ;-------------------------------------
 
-.LD8FC          ldaa        $2059
-                bita        #$01                ; test 2059.0 (stepper mtr related??)
-                beq         .LD904              ; (2059.0 may have stayed zero for RTs)
+.LD8FC          ldaa        bits_2059
+                bita        #$01                ; test bits_2059.0 (stepper mtr related??)
+                beq         .LD904              ; (bits_2059.0 may have stayed zero for RTs)
                 rts
 ;------------------------------------------------------------------------------
 ; Only path here is D901 (just above)
@@ -581,8 +583,8 @@ ENDC
                 oraa        #$01                ; set 0088.0 (set near eng start and stays set)
                 staa        $0088
                 clra
-                staa        $0073               ; zero for D90, for RR: zero with 4s and 10s (stepper mtr rel.)
-                staa        $0071               ; occasionally init to 6 and decremented to zero
+                staa        iacvValue2
+                staa        iacvValue0
                 ldd         $00CE               ; still current idle speed target
                 subd        engineRPM
                 bcc         .LD91B              ; branch if eng RPM is lower than target
@@ -609,63 +611,63 @@ ENDC
                 stab        iacMotorStepCount
                 beq         .LD94B
 
-                clr         $00C0               ; if here, idle adjustment is needed
-                ldaa        $2059
-                anda        #$EF                ; clr 2059.4 (stepper mtr or idle related)
-                staa        $2059
+                clr         idleRelatedValue    ; if here, idle adjustment is needed
+                ldaa        bits_2059
+                anda        #$EF                ; clr bits_2059.4 (stepper mtr or idle related)
+                staa        bits_2059
                 bra         .LD999
 
 
-.LD94B          ldab        $00C0
+.LD94B          ldab        idleRelatedValue
                 cmpb        $C155               ; for 3360, value is 0xAF
                 bcs         .LD996
                 ldaa        $C156               ; for 3360, value is 0x28
-                staa        $00B3               ; idle speed adjustment
-                ldaa        $2059
-                oraa        #$10                ; set 2059.4 (stepper mtr or idel related)
-                staa        $2059
-                ldaa        $0089
-                anda        #$03                ; isolate 0089.1 and 0089.0
+                staa        idleSpeedDelta      ; idle speed adjustment
+                ldaa        bits_2059
+                oraa        #$10                ; set bits_2059.4 (stepper mtr or idel related)
+                staa        bits_2059
+                ldaa        bits_0089
+                anda        #$03                ; isolate bits_0089.1 and bits_0089.0
                 bne         .LD97C              ; branch ahead if either bit is set
                 jsr         LF658               ; the only call to this s/r
-                ldab        $2047               ; bits
+                ldab        bits_2047
                 ldaa        coolantTempCount
                 cmpa        $C17D               ; val is $1C
                 bcs         .LD977              ; branch ahead if CT is LT $1C (hotter than)
                 cmpa        $C17E               ; inside coolant temp table (value is $23)
                 bcs         .LD97C
 
-.LD977          andb        #$BF                ; clr 2047.6 (normally 0)
-                stab        $2047
+.LD977          andb        #$BF                ; clr bits_2047.6 (normally 0)
+                stab        bits_2047
 
 .LD97C          ldab        $00DC
                 bitb        #$08                ; test 00DC.3
                 bne         .LD995
                 orab        #$08                ; set  00DC.3
                 stab        $00DC
-                ldd         $0098               ; load down counter
+                ldd         purgeValveTimer2    ; load down counter
                 bne         .LD995              ; branch to rtn if not zero
                 ldd         #$0020
-                std         $0098               ; zero, so reset counter to 32 dec
-                ldaa        $008D
-                oraa        #$80                ; and set 008D.7 (bit went from 0 to 1 during both RTs)
-                staa        $008D
+                std         purgeValveTimer2    ; zero, so reset counter to 32 dec
+                ldaa        bits_008D
+                oraa        #$80                ; and set bits_008D.7 (bit went from 0 to 1 during both RTs)
+                staa        bits_008D
 
 .LD995          rts
 ;------------------------------------------------------------------------------
 ; Only path here is D950 (above)
 ;------------------------------------------------------------------------------
 
-.LD996          inc         $00C0
+.LD996          inc         idleRelatedValue
 
 
 .LD999          ldaa        $00CC
                 beq         .LD9D1
-                ldaa        $2047
-                bita        #$04                ; test 2047.2 (VSS fail bit, normally 0)
+                ldaa        bits_2047
+                bita        #$04                ; test bits_2047.2 (VSS fail bit, normally 0)
                 beq         .LD9CB
-                ldaa        $006E               ; calc value based on coolant temp (100 -> 160)
-                adda        $006F               ; nothing changes this (stayed zero for both RTs)
+                ldaa        iacvEctValue        ; calc value based on coolant temp (100 -> 160)
+                adda        iacvObsolete        ; nothing changes this
                 cmpa        #$B4                ; $B4 = 180 dec
                 bcc         .LD9B2
                 adda        #$4B                ; $4B =  75 dec
@@ -708,7 +710,7 @@ ENDC
 
 .LD9E5          ldab        $C153               ; value is $1C
 
-.LD9E8          stab        $00B3               ; idle speed adjustment
+.LD9E8          stab        idleSpeedDelta      ; idle speed adjustment
                 rts
 
 ;------------------------------------------------------------------------------
@@ -723,14 +725,14 @@ ENDC
 ; 2) From Inertia Switch routine
 ; 3) From Coolant Temp routine (loops until iacMotorStepCount is zero)
 ;
-; Note that X00C6/C7 is only used here
+; Note that 16-bit value 'stepperMotorTimer' is only used here
 ;------------------------------------------------------------------------------
 driveIacMotor   tpa                             ; xfer CCR to A
                 psha                            ; and push to stack
                 ldaa        iacMotorStepCount
                 beq         .LDA1D              ; if zero, branch to jmp to pop CCR and rtn
-                ldaa        $2047
-                bita        #$80                ; test 2047.7 (normally zero)
+                ldaa        bits_2047
+                bita        #$80                ; test bits_2047.7 (normally zero)
                 beq         .LD9FC              ; branch if bit is low
                 ldd         counterHigh         ; load counter value into A-B
                 bra         .LD9FF
@@ -744,7 +746,7 @@ driveIacMotor   tpa                             ; xfer CCR to A
                 bita        #$04                ; test 0085.2 (indicates extra eng load??, No, IS run-0nce bit)
                 beq         .LDA12              ; branch ahead if zero
                 ldd         $00C8
-                subd        $00C6               ; counter subtract value
+                subd        stepperMotorTimer   ; counter subtract value
                 subd        #$0C35              ; subtract 3125 dec
                 bcs         .LDA2D              ; if carry set, branch to jump to pop CCR and rtn
                 bra         .LDA3D              ; carry clr, branch ahead
@@ -759,11 +761,11 @@ driveIacMotor   tpa                             ; xfer CCR to A
                                                 ; code branches here if step count is zero
 .LDA1D          beq         .LDA31              ; branch to jmp to pop CCR and rtn
 
-.LDA1F          ldaa        $2038
-                bita        #$40                ; test 2038.6
+.LDA1F          ldaa        bits_2038
+                bita        #$40                ; test bits_2038.6
                 bne         .LDA34
                 ldd         $00C8
-                subd        $00C6               ; counter subtract value
+                subd        stepperMotorTimer   ; counter subtract value
                 subd        #$186A              ; subtract 6250 dec
 
 .LDA2D          bcs         .LDA31              ; branch to jmp to pop CCR and rtn
@@ -772,16 +774,16 @@ driveIacMotor   tpa                             ; xfer CCR to A
 .LDA31          jmp         .LDAD0              ; pop CCR and return
 
 .LDA34          ldd         $00C8
-                subd        $00C6               ; counter subtract value
+                subd        stepperMotorTimer   ; counter subtract value
                 subd        #$0C35              ; subtract 3125 dec
                 bcs         .LDA31
 
 .LDA3D          ldaa        $008A               ; code gets here from 2 places if carry clr
-                eora        $2038               ; exclusive or the A reg with 2038
-                bita        #$01                ; test eor of 008A.0 and 2038.0 (stppr mtr direction)
+                eora        bits_2038           ; exclusive or the A reg with bits_2038
+                bita        #$01                ; test eor of 008A.0 and bits_2038.0 (stppr mtr direction)
                 bne         .LDAAF              ; branch ahead if only 1 of the 2 bits was set
                 dec         iacMotorStepCount
-                ldab        $0074               ; load SM drive value into B
+                ldab        iacvDriveValue      ; load SM drive value into B
                 jsr         LDAD3               ; stepper motor sub-routine (below)
                 ldaa        $008A
                 bita        #$01                ; test 008A.0 (stepper mtr direction bit, 0 = open, 1 = close)
@@ -806,7 +808,7 @@ driveIacMotor   tpa                             ; xfer CCR to A
                 beq         .LDA6C              ; skip decrement if zero
                 decb                            ; decrement stepper mtr position
 
-.LDA6C          staa        $0074               ; SM drive value
+.LDA6C          staa        iacvDriveValue      ; SM drive value
                 anda        #$30                ; bits 5:4 are SM drive bits
                 staa        $00CA               ; store at 00CA
                 ldaa        port1data           ; P1.5 and P1.4 are SM drive signals
@@ -822,7 +824,7 @@ driveIacMotor   tpa                             ; xfer CCR to A
                 ldab        #$01                ; if zero, limit it to 1
 
 .LDA86          stab        iacPosition
-                ldaa        $00AE               ; (4 of 5)
+                ldaa        iacvWorkingValue    ; (4 of 5)
                 beq         .LDA93              ;
                 bmi         .LDA90              ;
 ;------------------------------------------------------------------------------
@@ -831,16 +833,16 @@ driveIacMotor   tpa                             ; xfer CCR to A
 ;------------------------------------------------------------------------------
                 
 ;-------------------------------------
-;    When X00AE is Positive
+;    When 'iacvWorkingValue' is Positive
 ;-------------------------------------
 ;        deca                ; decrement A
 ;        cmpa    #$4C        ; 4C op code is inca (cmpa result not used)
 ;-------------------------------------
-;    When X00AE is Negative
+;    When 'iacvWorkingValue' is Negative
 ;-------------------------------------
 ;        deca                ; need byte for alignment
-;        FCB    $81                ; ditto
-;.LDA90:                        ; value $81 is not used
+;        FCB    $81          ; ditto
+;.LDA90:                     ; value $81 is not used
 ;        inca                ; increment A
 ;-------------------------------------
 
@@ -848,46 +850,46 @@ driveIacMotor   tpa                             ; xfer CCR to A
 
 .LDA90          DB          $4C
 
-                staa        $00AE               ; (5 of 5)
+                staa        iacvWorkingValue    ; (5 of 5)
 
-.LDA93          clr         $203A               ; stepper motor position?
+.LDA93          clr         stepperMotorReSync  ; counter for direction change
                 ldaa        $00CE
                 beq         .LDAA4
-                ldd         $2053
-                subd        #$0001              ; decrement X2053/54
+                ldd         stepperMtrCounter
+                subd        #$0001              ; decrement stepperMtrCounter
                 bcc         .LDAAC
                 bra         .LDAAF
 
-.LDAA4          ldd         $2053
-                addd        #$0001              ; increment X2053/54
+.LDAA4          ldd         stepperMtrCounter
+                addd        #$0001              ; increment stepperMtrCounter
                 bcs         .LDAAF
 
-.LDAAC          std         $2053
+.LDAAC          std         stepperMtrCounter
 
 .LDAAF          ldd         $00C8
-                std         $00C6               ; counter subtract value
-                ldab        $203A               ; stepper motor position?
-                incb                            ; increment 203A
-                stab        $203A               ; stepper motor position?
+                std         stepperMotorTimer   ; counter subtract value
+                ldab        stepperMotorReSync
+                incb                            ; increment re-sync counter
+                stab        stepperMotorReSync
                 cmpb        #$04
                 bne         .LDAD0              ; pop CCR and return
-                ldab        $2038
+                ldab        bits_2038
                 ldaa        $008A
                 bita        #$01                ; test 008A.0 (stepper mtr direction bit, 0 = open, 1 = close)
                 bne         .LDACB
-                andb        #$FE                ; clear 2038.0
+                andb        #$FE                ; clear bits_2038.0
                 bra         .LDACD
 
-.LDACB          orab        #$01                ;   set 2038.0
+.LDACB          orab        #$01                ;   set bits_2038.0
 
-.LDACD          stab        $2038
+.LDACD          stab        bits_2038
 
 .LDAD0          pula                            ; pop the CCR
                 tap                             ; and restore it
                 rts
 ;------------------------------------------------------------------------------
-; Branches here conditionally from DA4B only. B is loaded from 0074 (the
-; stepper motor drive value). If B is one of the following 4 values, the
+; Branches here conditionally from DA4B only. B is loaded from 'iacvDriveValue'
+; (the stepper motor drive value). If B is one of the following 4 values, the
 ; routine just returns, otherwise, the stepper motor bits are examined and one
 ; of the 4 values is returned accordingly.
 ; 1E -> 1E (00011110)

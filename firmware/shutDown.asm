@@ -58,16 +58,16 @@ adcRoutine0     ldab        $0085               ; load X0085 bits value
                 bcc         .LCFEA              ; branch ahead if > $1F (normal path)
                 
                                                 ; if here, voltage dropped below thrshold
-                ldab        $00B1               ; X00B1 is a counter (used in this routine only)
+                ldab        inertiaCounter      ; local counter
                 incb                            ; increment the delay counter
                 cmpb        #$32                ; compare with 50 decimal
                 bcc         .LCFEE              ; if counter = 50, branch to start shutdown
                 
-                stab        $00B1               ; count < 50, so just store it
+                stab        inertiaCounter      ; count < 50, so just store it
                 rts                             ;  and return
 ;----------------------------------------------------------
 
-.LCFEA          clr         $00B1               ; clear counter
+.LCFEA          clr         inertiaCounter      ; clear counter
                 rts                             ;  and return (normal path)
                 
 ;-----------------------------------------------------------
@@ -88,15 +88,15 @@ adcRoutine0     ldab        $0085               ; load X0085 bits value
                 ldaa        $0054               ; load working value of Throttle Pot Minimum (TPmin)
                 staa        $0052               ; store TPmin in battery backed RAM
 
-.LD005          ldaa        $2047               ; load bits value
-                bita        #$04                ; test X2047.2 (VSS fail bit)
+.LD005          ldaa        bits_2047           ; load bits value
+                bita        #$04                ; test bits_2047.2 (VSS fail bit)
                 bne         .copyRAM            ; branch if road speed sensor is bad
                 
-                bita        #$40                ; test X2047.6 (this bit is normally low)
+                bita        #$40                ; test bits_2047.6 (this bit is normally low)
                 beq         .copyRAM            ; branch if bit is low
                 
-                jsr         LF7A5               ; this subroutine is called only here, this is the only
-                                                ; place where battery backed location X004F is written
+                jsr         LF7A5               ; this subroutine is called only here, this is the only place
+                                                ; where battery backed location stprMtrSavedValue is written
 
 
 .copyRAM        ldx         #(externalRAMCopy - 1)      ; copy internal to external RAM, the software
@@ -123,15 +123,15 @@ adcRoutine0     ldab        $0085               ; load X0085 bits value
                 orab        #$04                ; set X0085.2 (to indicate start of shutdown sequence)
                 andb        #$9F                ; clr X0085.6 and X0085.5 (clear some housekeeping bits)
                 stab        $0085               ; store X0085 bits value
-                ldaa        $2047
-                anda        #$DF                ; clr X2047.5 (this bit is set when eng RPM > 350)
-                staa        $2047
+                ldaa        bits_2047
+                anda        #$DF                ; clr bits_2047.5 (this bit is set when eng RPM > 350)
+                staa        bits_2047
                 ldaa        $0087
                 anda        #$FB                ; clr X0087.2 (code control bit?)
                 staa        $0087
-                ldaa        $2047
-                oraa        #$80                ; set X2047.7 (controls timer in stepper mtr routine)
-                staa        $2047
+                ldaa        bits_2047
+                oraa        #$80                ; set bits_2047.7 (controls timer in stepper mtr routine)
+                staa        bits_2047
                 
 ;------------------------------------------------
 ; Code branches here from above if the shutdown
@@ -147,12 +147,12 @@ adcRoutine0     ldab        $0085               ; load X0085 bits value
                 bne         .LD053              ; *** end SM loop
                 
                 ldd         #$8001
-                std         $2053               ; store $8001 at X2053/54
-                staa        $2048               ; reset X2048 to $80 (zero point)
-                staa        $0072               ; reset X0072 to $80 (zero point)
+                std         stepperMtrCounter   ; reset stepperMtrCounter to $8001
+                staa        iacvVariable        ; reset iacvVariable to $80 (zero point)
+                staa        iacvValue1          ; reset iacvValue1 to $80 (zero point)
                 ldd         #$0000
-                std         $2049               ; reset road speed (distance) counter
-                ldab        $0074               ; stepper motor drive value
+                std         faultCode26Counter  ; reset road speed (distance) counter
+                ldab        iacvDriveValue      ; stepper motor drive value
                 cmpb        #$87                ; $87 is 1 of 4 drive values and is the default
                 beq         .checkHiTemps       ; set stepper motor to position $87 before leaving loop
                 
@@ -160,9 +160,9 @@ adcRoutine0     ldab        $0085               ; load X0085 bits value
                 stab        iacMotorStepCount   ; store 1
                 bra         .LD053              ; branch back to move stepper motor 1 more step
 
-.checkHiTemps   ldaa        $2047
-                anda        #$7F                ; clr X2047.7 (controls timer in stepper mtr routine)
-                staa        $2047
+.checkHiTemps   ldaa        bits_2047
+                anda        #$7F                ; clr bits_2047.7 (controls timer in stepper mtr routine)
+                staa        bits_2047
 ;-----------------------------------------
 ; If ECT and EFT sensors indicate very hot
 ; turn on the condenser fan timer

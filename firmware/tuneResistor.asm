@@ -18,8 +18,8 @@
 ;   case, there was no need for an external resistor. In fact, the vehicle's
 ;   wiring harness may be missing the necessary connection to the ECU.
 ;
-;   Bit X0049.7 is the actual fault code (lights MIL if not masked).
-;   Bit X2038.2 is the internal 'housekeeping' bit for this fault.
+;   faultBits_49 bit 7 is the actual fault code (lights MIL if not masked).
+;   Bit bits_2038.2 is the internal 'housekeeping' bit for this fault.
 ;
 ;------------------------------------------------------------------------------
 code
@@ -76,19 +76,19 @@ adcRoutine10    ldab        fuelMapLock             ; load fuel map lock value
 ;------------------------------------------------------------------------------
 ; Engine is running
 ;------------------------------------------------------------------------------
-                ldaa        $2038               ; if here, engine is running
-                bita        #$04                ; test X2038.2 (indicates fuel map resistor fault 21)
+                ldaa        bits_2038           ; if here, engine is running
+                bita        #$04                ; test bits_2038.2 (indicates fuel map resistor fault 21)
                 bne         .LD58F              ; branch if fault 21 is already set
                 
                 ldaa        fuelMapNumber       ; else, compare fuel map number 
                 cmpa        fuelMapNumberBackup ; with value saved in battery-backed memory (X0050)
                 bne         .LD593
                 
-                ldaa        $2038               ; if here, fuel map numbers match
-                oraa        #$04                ; set X2038.2
-                staa        $2038               ;
+                ldaa        bits_2038           ; if here, fuel map numbers match
+                oraa        #$04                ; set bits_2038.2
+                staa        bits_2038               ;
 
-.LD58B          clr         $203D               ; clear fault 21 delay counter
+.LD58B          clr         tuneResistorDelay   ; clear fault 21 delay counter
                 rts
 ;------------------------------------------------------------------------------
 ; Engine is running (internal fault bit already set)
@@ -98,14 +98,14 @@ adcRoutine10    ldab        fuelMapLock             ; load fuel map lock value
 ;------------------------------------------------------------------------------
 ; Engine is running (fuel map is zero or fuel map numbers don't agree)
 ;------------------------------------------------------------------------------
-.LD593          ldaa        $203D               ; load fault 21 delay counter
+.LD593          ldaa        tuneResistorDelay   ; load fault 21 delay counter
                 cmpa        #$FF                ; compare with $FF
                 beq         .LD5A6              ; if counter = $FF, branch to set fault bit
                 
                 inca                            ; increment the counter
-                staa        $203D               ; store it
-                ldaa        $2038
-                bita        #$04                ; test X2038.2 (internal fault bit)
+                staa        tuneResistorDelay   ; store it
+                ldaa        bits_2038
+                bita        #$04                ; test bits_2038.2 (internal fault bit)
                 beq         .LD5B5              ; if zero, branch to Fuel Map Selection
                 rts                             ; else, return
 ;------------------------------------------------------------------------------
@@ -114,9 +114,9 @@ adcRoutine10    ldab        fuelMapLock             ; load fuel map lock value
 .LD5A6          ldaa        faultBits_49
                 oraa        #$80                ; <-- Set Fault Code 21
                 staa        faultBits_49
-                ldaa        $2038
-                oraa        #$04                ; set X2038.2 internal fault code
-                staa        $2038
+                ldaa        bits_2038
+                oraa        #$04                ; set bits_2038.2 internal fault code
+                staa        bits_2038
                 rts
 ;------------------------------------------------------------------------------
 ; This selects Fuel Map addr ptr based on Fuel Map Number (which is in B accum)

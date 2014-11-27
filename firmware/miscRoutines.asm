@@ -11,7 +11,8 @@
 code
 
 ;------------------------------------------------------------------------------
-; This sets fault bits in 004A or 004D according to the value in A accum
+; This sets fault bits in faultBits_4A or faultBits_4D according to the value
+; in A accumulator.
 ;   $76 = Fault Code 17 (TP sensor)
 ;   $70 = Fault Code 14 (ECT sensor)
 ;   $71 = Fault Code 15 (EFT sensor)
@@ -78,9 +79,9 @@ IF BUILD_R3360_AND_LATER
                 ; nothing
 ELSE
 
-.setMafFaultFF	ldab	    $0049
+.setMafFaultFF	ldab	    faultBits_49
 			    orab	    #$40		        ; set MAF fault bit
-			    stab	    $0049
+			    stab	    faultBits_49
 			    ldab	    $0087
 			    orab	    #$02		        ; set MAF fault bit
 			    stab	    $0087
@@ -102,9 +103,9 @@ IF BUILD_R3360_AND_LATER
                 ; nothing
 ELSE
 
-.setTPFault19	ldab	    $004A		        ; value 02 (fault code 19?)
+.setTPFault19	ldab	    faultBits_4A		; value 02 (fault code 19?)
 			    orab	    #$40		        ; removed from R3526 code
-			    stab	    $004A
+			    stab	    faultBits_4A
 			    rts
 ENDC
 
@@ -117,15 +118,15 @@ ENDC
 LEE12           ldab        iacMotorStepCount   ; absolute value of stepper mtr adjustment
                 bne         .LEE28              ; return if iacMotorStepCount is not zero
                 
-                ldab        $0073               ; 
-                beq         .LEE28              ; return if X0073 is zero
+                ldab        iacvValue2
+                beq         .LEE28              ; return if iacvValue2 is zero
                 
-                stab        iacMotorStepCount   ; store X0073 as iacMotorStepCount
+                stab        iacMotorStepCount   ; store iacvValue2 as iacMotorStepCount
                 ldab        $008A
                 orab        #$01                ; set X008A.0 (stepper mtr direction, 1 = close)
                 stab        $008A
-                clr         $0073               ; and clr 0073
-                inc         $00B3               ; idle speed adjustment
+                clr         iacvValue2          ; and clr iacvValue2
+                inc         idleSpeedDelta      ; idle speed adjustment
 
 .LEE28          rts
 

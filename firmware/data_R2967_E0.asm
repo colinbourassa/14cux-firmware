@@ -88,6 +88,9 @@ initialRpmMargin  = $0F     ; used in reset.asm
 ignPeriodEngStart = $3A     ; used in several files (MSB = 505 RPM)
 startupDelayCount = $04     ; used in ignitionInt.asm (usually $04 but $02 for cold weather chip)
 coldStartupFactor = $0A     ; used in ignitionInt.asm (value is $12 for cold weather chip)
+highRoadSpeed_ON  = $C4     ; 196 KPH (122 MPH)
+highRoadSpeed_OFF = $FC     ; minus 4 (196 - 4 = 192 KPH)
+highSpeedIndByte  = $AA     ; the high road speed indicator byte (normally $AA)
 
 dtc17_tpsMinimum  = $0010   ; used in throttlePot.asm (78mV, this is 39mV for R3526 and R3652)
 dtc18_tpsMaximum  = $0133   ; used in ignitionInt.asm (1.5V, changed to 4V in later code)
@@ -257,9 +260,9 @@ engInitDataC  DB        $04                 ; Init value for X9200
             DB          $00,$00,$00,$30,$4C,$90,$E0,$00 ; row 2 is multiplied by remainder
 
             DB          $FF
-            DW          $FFEC               ; This inits the value in 00B5/B6 to minus 20
-            DB          $2C                 ; This inits the value in 00B8 to 44 dec
-            DB          $2C                 ; This inits the value in 00B8 to 44 dec (alternate code path)
+            DW          $FFEC               ; This inits the value in idleControlValue to minus 20
+            DB          $2C                 ; This inits the value in acDownCounter to 44 dec
+            DB          $2C                 ; This inits the value in acDownCounter to 44 dec (alt. code path)
             DW          $0200               ; value used in ICI only
 idleAdjForHeatedScreen  DW  $0000               ; Value zero (idle setting adjustment for heated screen)
             DB          $08
@@ -311,7 +314,7 @@ hiRPMAdcMux     DB          $87,$02,$87,$86,$87,$02,$87
 
                 DB          $1E
                 DW          $0032
-                DB          $6C                 ; Used to init X004F
+                DB          $6C                 ; Used to init 'stprMtrSavedValue'
                 DB          $25
                 DW          $4720
                 DB          $1C
@@ -329,14 +332,14 @@ hiRPMAdcMux     DB          $87,$02,$87,$86,$87,$02,$87
                 DB          $0F
                 DB          $0A                 ; used by road speed routine
                 DB          $50
-                DB          $02                 ; used by Calculate_X2048
-                DB          $02                 ; used by Calculate_X2048
+                DB          $02                 ; used by CalcIacvVariable
+                DB          $02                 ; used by CalcIacvVariable
                 DB          $06
                 DW          $0258               ; used by input capture interrupt
                 DW          $03E6               ; used by input capture interrupt
                 DB          $53
-                DW          $7FB9               ; used by Calculate_X2048
-                DW          $80B4               ; used by Calculate_X2048
+                DW          $7FB9               ; used by CalcIacvVariable
+                DW          $80B4               ; used by CalcIacvVariable
                 DB          $28                 ; used by ignition sense subroutine
 
 ;------------------------------------------------------------------------------
@@ -541,7 +544,7 @@ voltageMultB    DB          $BD
 voltageOffset   DW          $6408
 
 LC7C7   DB  $27
-LC7C8   DW  $EA60   ; stored in X2042/43 (60000 init value used by TP routine)
+LC7C8   DW  $EA60   ; stored in 'throttlePotCounter' (60000 init value used by TP routine)
 LC7CA   DW  $10D6   ; value subtracted in TP Routine
 LC7CC   DW  $0001   ; value subtracted in TP Routine
 LC7CE   DB  $0A     ; comparison value in TP Routine
@@ -577,4 +580,36 @@ LC7DB   DW  $05DC   ; (1500 dec) subtract from short term trim in s/r (bank rela
         DB  $A7,$5A,$A7
 
         DB  $1A						            ; unknown
-        
+
+;------------------------------------------------------------------------------
+;                               RPM Table
+;   This table sets up the RPM brackets for the fuel map. Ignition period is
+;   measured by the microprocessor and stored as a 16-bit number. The period
+;   is measured in 1 uSec increments but is divided by 2 and stored in 2 uSec
+;   units. The first two columns in the table are the 16-bit ignition period
+;   brackets and the right two columns tell the software how to interpolate
+;   the remainder.
+;
+;   If editing this table, it's important to make sure that the interpolation
+;   values are correct for a smoothly changing curve.
+;
+;------------------------------------------------------------------------------
+
+*               =           $C800
+
+rpmTable        DB          $05, $53, $40, $00  ; 5502 RPM
+                DB          $06, $2A, $00, $13  ; 4753 RPM
+                DB          $07, $25, $00, $10  ; 4100 RPM
+                DB          $07, $D0, $00, $18  ; 3750 RPM
+                DB          $09, $73, $80, $9C  ; 3100 RPM
+                DB          $0A, $D9, $80, $B7  ; 2700 RPM
+                DB          $0E, $A6, $80, $43  ; 2000 RPM
+                DB          $10, $BD, $80, $7A  ; 1750 RPM
+                DB          $14, $ED, $80, $3D  ; 1400 RPM
+                DB          $1A, $A2, $80, $2C  ; 1100 RPM
+                DB          $20, $8D, $80, $2B  ;  900 RPM
+                DB          $25, $8F, $80, $33  ;  780 RPM
+                DB          $29, $DA, $80, $3B  ;  700 RPM
+                DB          $2F, $40, $80, $2F  ;  620 RPM
+                DB          $3D, $09, $80, $12  ;  480 RPM
+                DB          $92, $7C, $40, $2F  ;  200 RPM

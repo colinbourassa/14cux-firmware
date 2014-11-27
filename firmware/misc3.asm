@@ -52,19 +52,19 @@ LF423           ldd         throttlePot         ; 10-bit value
 .LF434          ldaa        $0087
                 anda        #$F7                ; clr X0087.3 (TPS < 91%)
                 staa        $0087
-                ldaa        $008C
-                anda        #$F7                ; clr X008C.3
-                staa        $008C
+                ldaa        bits_008C
+                anda        #$F7                ; clr bits_008C.3
+                staa        bits_008C
                 bra         .LF4A9
 ;-------------------------------
 ; Code branches here from below
 ; when fuel map row index < $30
 ; or RPM < 1838
 ;-------------------------------
-.LF442          ldab        $008C
-                andb        #$F7                ; clr X008C.3
-                stab        $008C
-                clra                            ; clr A to store in X006C
+.LF442          ldab        bits_008C
+                andb        #$F7                ; clr bits_008C.3
+                stab        bits_008C
+                clra                            ; clr A to store in tpMinCounter
                 bra         .LF4A7
                 
 ;-------------------------------
@@ -126,9 +126,9 @@ LF423           ldd         throttlePot         ; 10-bit value
                                                 ; $2010 is initialized from the 2nd last value in the fuel map
 .LF489          ldaa        $2010               ; this value is in the range of $51 to $68
 
-.LF48C          ldab        $008C
-                orab        #$08                ; set X008C.3 (when set, open loop is forced)
-                stab        $008C
+.LF48C          ldab        bits_008C
+                orab        #$08                ; set bits_008C.3 (when set, open loop is forced)
+                stab        bits_008C
                 ldab        faultBits_4C
                 bitb        #$40                ; test VSS fault bit (road speed)                
                 beq         .LF4A7              ; branch ahead if no fault
@@ -145,7 +145,7 @@ LF423           ldd         throttlePot         ; 10-bit value
 .LF4A6          clra
 ;---------------------------------------
                                                 ; can branch here from above
-.LF4A7          staa        $006C               ; throttle pot related counter (reset to value in X2010)
+.LF4A7          staa        tpMinCounter        ; throttle pot related counter (reset to value in X2010)
 ;---------------------------------------
                                                 ; can branch here from above
 .LF4A9          ldd         throttlePot
@@ -156,9 +156,9 @@ LF423           ldd         throttlePot         ; 10-bit value
                 anda        #$7E                ; clr X0086.7 and X0086.0
                 oraa        #$04                ; set X0086.2
                 staa        $0086
-                ldaa        $2059
-                anda        #$FB                ; clr X2059.2
-                staa        $2059
+                ldaa        bits_2059
+                anda        #$FB                ; clr bits_2059.2
+                staa        bits_2059
 
 .LF4C0          rts
 
@@ -166,8 +166,8 @@ LF423           ldd         throttlePot         ; 10-bit value
 ;----------------------------------------------------------------------------------
 ; This subroutine is Called from Engine Coolant Temperature service routine only.
 ;
-; Uses X2012 which is the current O2 reading (either bank). This value is about
-; 50 to 60 count for a high and zero for a low.
+; Uses 'lambdaReading' which is the current O2 reading (either bank). This value is
+; about 50 to 60 count for a high and zero for a low.
 ;
 ; Values potentially written here:
 ;
@@ -183,23 +183,23 @@ LF423           ldd         throttlePot         ; 10-bit value
 ; X201C     Left
 ;
 ;----------------------------------------------------------------------------------
-LF4C1           ldab        $0089               ; load bits value
-                andb        #$07                ; mask X0089.2, X0089.1 and X0089.0
+LF4C1           ldab        bits_0089           ; load bits value
+                andb        #$07                ; mask bits_0089 bits 2:0
                 bne         .LF4DA              ; return if any of 3 bits are high
-                ldab        $2012               ; latest O2 reading
+                ldab        lambdaReading       ; latest O2 reading
                 cmpb        #$0F                ; compare with 15
                 bcc         .LF4DA              ; rtn if O2 reading > 15 (rich condition)
                 
-                ldaa        $2004               ; load bits value
+                ldaa        bits_2004           ; load bits value
                 tst         $0088               ; test bank indicator bit X0088.7
                 bmi         .LF4FB              ; branch if right bank
 ;------------------------------------------------
 ; Left Bank
 ;------------------------------------------------
-                bita        #$08                ; test X2004.3
+                bita        #$08                ; test bits_2004.3
                 bne         .LF4DB              ; branch to continue if set
 
-.LF4DA          rts                             ; X2004.3 is zero, so return
+.LF4DA          rts                             ; bits_2004.3 is zero, so return
 ;------------------
 .LF4DB          ldx         $2015               ; normally cycles from 200 to 0
                 dex                             ; decrement X2015/16 (range 0 to 200)
@@ -208,20 +208,20 @@ LF4C1           ldab        $0089               ; load bits value
                                                 ;  (this code executes every 200th time)
                 ldx         $C1FC               ; val is $00C8 (200 dec)
                 stx         $2015               ; reset X2015/16 to 200
-                bita        #$20                ; test X2004.5
+                bita        #$20                ; test bits_2004.5
                 bne         .LF550              ; if bit 5 is 1, branch ahead to left bank code
                 oraa        #$20                ; set bit 5 and continue
-                staa        $2004               ; 
+                staa        bits_2004           ; 
                 ldaa        $2018               ; 
                 staa        $201A               ; 
                 bra         .LF562              ; branch down to reset X2018 to minus 1 and return
 ;------------------------------------------------
 ; Right Bank
 ;------------------------------------------------
-.LF4FB          bita        #$04                ; test X2004.2
+.LF4FB          bita        #$04                ; test bits_2004.2
                 bne         .LF500              ; branch to continue if set
                 
-                rts                             ; X2004.2 is zero, so return
+                rts                             ; bits_2004.2 is zero, so return
 ;------------------
 .LF500          ldx         $2013               ; normally cycles from 200 to 0
                 dex                             ; decrement X2013/14 (range 0 to 200)
@@ -230,10 +230,10 @@ LF4C1           ldab        $0089               ; load bits value
                                                 ;  (this code executes every 200th time)
                 ldx         $C1FC               ; val is $00C8 (200 dec)
                 stx         $2013               ; reset X2013/14 to 200
-                bita        #$10                ; test X2004.4
+                bita        #$10                ; test bits_2004.4
                 bne         .LF538              ; if bit 4 is 1, branch ahead to right bank code
                 oraa        #$10                ; set bit 4 and continue
-                staa        $2004               ; 
+                staa        bits_2004           ; 
                 ldaa        $2017               ; 
                 staa        $2019               ; 
                 bra         .LF54A              ; branch down to reset X2017 to minus 1 and return
@@ -244,7 +244,7 @@ LF4C1           ldab        $0089               ; load bits value
 
 .LF525          ldaa        $2018               ;
 
-.LF528          cba                             ; (A minus B)  A=(2017 or 2018)  B=(2012)
+.LF528          cba                             ; (A minus B)  A=(2017 or 2018)  B=(lambdaReading)
                 bcs         .LF537              ; rtn if A is less than B
                 tst         $0088               ; test bank indicator bit
                 bmi         .LF534              ;
@@ -325,32 +325,32 @@ initRAMFromExt  ldd         secondaryLambdaR
                 std         longLambdaTrimL
 
 .LF598          ldd         hiFuelTemperature   ; checks two 8-bit values
-                subd        $2068               ;   X0048 = hiFuelTemperature
-                beq         .LF5A4              ;   X0049 = faultBits_49
+                subd        $2068               ; 1st byte = hiFuelTemperature
+                beq         .LF5A4              ; 2nd byte = faultBits_49
                 ldd         #$0000
                 std         hiFuelTemperature
 
 .LF5A4          ldd         faultBits_4A        ; checks two fault bytes
-                subd        $206A               ;   X004A and X0048
+                subd        $206A               ; (faultBits_4A and faultBits_4B)
                 beq         .LF5B0              ; and zeros them, if different
                 ldd         #$0000
                 std         faultBits_4A
 
 .LF5B0          ldd         faultBits_4C        ; checks two fault bytes
-                subd        $206C               ;   X004C and X004D
+                subd        $206C               ; (faultBits_4C and faultBits_4D)
                 beq         .LF5BC              ; and zeros them, if different
                 ldd         #$0000
                 std         faultBits_4C
 
-.LF5BC          ldd         faultBits_4E        ; check fault byte X004E and value in X004F
+.LF5BC          ldd         faultBits_4E        ; check faultBits_4E and stprMtrSavedValue
                 subd        $206E
                 beq         .LF5CF              ; if different,
-                clra                            ; set fault byte X004E to zero
-                ldab        $C242               ; and set X004F to data value at XC242
+                clra                            ; set fault byte faultBits_4E to zero
+                ldab        $C242               ; and set stprMtrSavedValue to data value at XC242
                 std         faultBits_4E
-                ldaa        $008C
-                oraa        #$40                ; set X008C.6 (data corrupted or RAM fail)
-                staa        $008C
+                ldaa        bits_008C
+                oraa        #$40                ; set bits_008C.6 (data corrupted or RAM fail)
+                staa        bits_008C
 
 
 .LF5CF          ldd         throttlePotMinimum  ; 16-bit value at X0051/52
@@ -359,9 +359,9 @@ initRAMFromExt  ldd         secondaryLambdaR
                 ldd         #$0070              ; reset to default value of $0070
                 std         throttlePotMinimum
                 std         throttlePotMinCopy
-                ldaa        $008C
-                oraa        #$40                ; set X008C.6 (data corrupted or RAM fail)
-                staa        $008C
+                ldaa        bits_008C
+                oraa        #$40                ; set bits_008C.6 (data corrupted or RAM fail)
+                staa        bits_008C
 
 .LF5E3          ldaa        fuelMapNumberBackup ; check fuel map number
                 suba        $2070

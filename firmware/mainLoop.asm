@@ -48,9 +48,9 @@ code
 ;
 ;------------------------------------------------------------------------------
 iciReentry      jsr         keepAlive           ; this must be called periodically
-                ldaa        $2047
-                anda        #$7F                ; clr X2047.7 (controls timer is IACV routine)
-                staa        $2047
+                ldaa        bits_2047
+                anda        #$7F                ; clr bits_2047.7 (controls timer is IACV routine)
+                staa        bits_2047
 
 
 preMainLoop     lds         #$00FF              ; init stack ptr to $00FF
@@ -110,11 +110,11 @@ ENDC
 ;----------------------------
 IF NEW_STYLE_FAULT_SCAN
 
-.LCA6F          ldd         $2032               ; zeroed at startup, 16-bit EFI light (MIL) delay
+.LCA6F          ldd         milTestDelay        ; zeroed at startup, 16-bit EFI light (MIL) delay
                 bne         .LCA7C              ; branch if not zero
                 
                 addd        #$0001              ; add 1 to delay counter
-                std         $2032               ; store it
+                std         milTestDelay        ; store it
                 bra         .checkFaultBits     ; branch to check for faults
 
 .LCA7C          bita        #$80
@@ -123,8 +123,8 @@ IF NEW_STYLE_FAULT_SCAN
                 bitb        #$40                ; test 0085.6 (engine started flag)
                 beq         Write9x00           ; branch to next section until engine starts
 
-                oraa        #$80                ; set X2032.7 (a signal to code below)
-                staa        $2032
+                oraa        #$80                ; set milTestDelay bit 17 (a signal to code below)
+                staa        milTestDelay
 
                                                 ; fault masks used here: $77,$BD,$00,$D0,$20,$00
                                                 ; (see faultMasks in faults.asm)
@@ -151,9 +151,9 @@ IF NEW_STYLE_FAULT_SCAN
 .efiLampOn      ldaa        port1data           ; if here, fail bit was found
                 anda        #$FE                ; EFI warning light ON
                 staa        port1data
-                ldaa        $2032
-                oraa        #$80                ; set X2032.7 (a signal to code below))
-                staa        $2032
+                ldaa        milTestDelay
+                oraa        #$80                ; set milTestDelay bit 15 (a signal to code below))
+                staa        milTestDelay
 IF OBSOLETE_CODE
                 jmp         Write9x00
 ELSE
@@ -174,13 +174,13 @@ ELSE
 ; and set the MIL.
 ;---------------------------------------------------------------------------
 	                                            ; scan for set fault bits
-.LCA6F		    ldaa	    $004D               
+.LCA6F		    ldaa	    faultBits_4D               
 		        anda	    #$EF                ; mask out bit 4 (DTC 59 -- Group Fault)
-		        oraa	    $004B               ; OR in all bits from X004B
-		        oraa	    $004C               ; OR in all bits from X004C
+		        oraa	    faultBits_4B        ; OR in all bits from faultBits_4B
+		        oraa	    faultBits_4C        ; OR in all bits from faultBits_4C
 		        anda	    #$F0                ; low nibble unused for all three
-		        oraa	    $0049               ; OR in all bits from X0049
-		        oraa	    $004A               ; OR in all bits from X004A
+		        oraa	    faultBits_49        ; OR in all bits from faultBits_49
+		        oraa	    faultBits_4A        ; OR in all bits from faultBits_4A
 		        beq	        Write9x00           ; if zero, no faults, branch ahead
 		        
 		        ldaa	    port1data
@@ -263,23 +263,23 @@ checkForHiSpeed ldaa        ignPeriod           ; load MSB of ignition period
 
                                                 ; if here, RPM > 4185 and TPS > 70%
                 ldx         #hiRpmAdcMux        ; load address of special ADC table ($C231)
-                ldaa        $201F
-                oraa        #$10                ; set X201F.4 (to indicate this high-speed condition)
-                staa        $201F
+                ldaa        bits_201F
+                oraa        #$10                ; set bits_201F.4 (to indicate this high-speed condition)
+                staa        bits_201F
                 ldaa        #$FF
-                staa        $2076               ; init counter to $FF (used to slow down switch over)
+                staa        specialAdcControl   ; init counter to $FF (used to slow down switch over)
                 bra         startAdcReads
 
-normalSpeed     ldaa        $2076               ; branches here if no need for hi-speed ADC mux table
-                beq         useNormalAdcMux     ; if counter is zero, it's time to switch back to normal
-                deca                            ; else, just decrement the delay counter
-                staa        $2076               ; and store it
-                ldx         #hiRpmAdcMux        ; load address of high-speed table
+normalSpeed     ldaa        specialAdcControl   ; branches here if no need for hi-speed ADC mux table
+                beq         useNormalAdcMux         ; if counter is zero, it's time to switch back to normal
+                deca                                ; else, just decrement the delay counter
+                staa        specialAdcControl   ; and store it
+                ldx         #hiRpmAdcMux            ; load address of high-speed table
                 bra         startAdcReads
 
-useNormalAdcMux ldaa        $201F               ; if here, we are using the normal ADC table
-                anda        #$EF                ; clear X201F.4 (to indicate normal)
-                staa        $201F
+useNormalAdcMux ldaa        bits_201F           ; if here, we are using the normal ADC table
+                anda        #$EF                ; clear bits_201F.4 (to indicate normal)
+                staa        bits_201F
                 ldx         adcMuxTableStart    ; load address of normal fuel map specific table
 
 startAdcReads   stx         adcMuxTablePtr      ; store pointer in the working (incrementing) location
@@ -334,11 +334,11 @@ ENDC
                 bmi         .LCB5A              ; branch to skip A/C if set (RPM > 1627)
                 
                                                 ; if here, RPM < 1627
-                ldaa        $00B8               ; down-counter set to 44 dec in A/C routine
+                ldaa        acDownCounter       ; down-counter set to 44 dec in A/C routine
                 beq         .LCB4A              ; branch to continue A/C routine if zero
                 
                 deca                            ; otherwise, decrement the down-counter
-                staa        $00B8               ; store it
+                staa        acDownCounter       ; store it
                 bra         .LCB5A              ; and branch to next section
                                                 
 .LCB4A          ldaa        port2data           ; counter reached zero
@@ -408,18 +408,18 @@ IF NEW_STYLE_MIL_CODE
 .romTestDone    ldaa        $C7C2               ; load XC7C2 again (will be $00 or $FF)
                 beq         .LCBAF              ; branch if zero (usually TVR and non-NAS)
                 
-                ldd         $2032               ; delay counter for EFI warning light
-                bita        #$80                ; test X2032.7 (possibly set above)
+                ldd         milTestDelay        ; delay counter for EFI warning light
+                bita        #$80                ; test milTestDelay bit 15 (possibly set above)
                 bne         .LCBAF              ; branch ahead if it's set
                 
                 addd        #$0001              ; otherwise, add 1
-                std         $2032
+                std         milTestDelay
                 subd        #$02CA              ; this value may act as a time delay
-                bcs         .LCBA9              ; branch while X2032 is less than this
+                bcs         .LCBA9              ; branch while milTestDelay is less than this
                 
-                ldaa        $2032
-                oraa        #$80                ; set X2032.7
-                staa        $2032
+                ldaa        milTestDelay
+                oraa        #$80                ; set milTestDelay bit 15
+                staa        milTestDelay
                 ldaa        port1data
                 oraa        #$01                ; EFI warning light OFF
                 staa        port1data
@@ -472,14 +472,14 @@ ENDC
                 
                 anda        #$03                ; save upper 2 bits of 10 bit data
                 staa        $00C8               ; store it in temporary location
-                staa        $00B9               ; store it here too but this location unused
+                staa        adcReadingUnused    ; store it here too but this location unused
                 ldaa        AdcDataLow          ; read low 8 bits
                 staa        $00C9               ; 10-bit ADC value is now at X00C8/C9
-                staa        $00BA               ;                        and X00B9/BA
+                staa        $00BA               ;                        and 'adcReadingUnused'
                 
 
 IF BUILD_R3365                
-		   	    ldaa	    $007A
+		   	    ldaa	    ignPeriod           ; ignition period (MSB only)
 		   	    cmpa	    #$0A
 		   	    bcc	        .LCBF8
 		   	    cmpa	    #$07
@@ -519,31 +519,31 @@ ENDC
                 
                 jsr         $00,x               ; <-- call ADC service routine
 
-                ldaa        $2059               ; load X2059 bits value
-                bita        #$20                ; test X2059.5 (set below or when ICI starts)
+                ldaa        bits_2059           ; load bits value
+                bita        #$20                ; test bits_2059.5 (set below or when ICI starts)
                 bne         .LCC1A              ; branch ahead if bit is 1
                 
-                bita        #$40                ; test X2059.6 (also set when ICI starts)
+                bita        #$40                ; test bits_2059.6 (also set when ICI starts)
                 beq         .LCC1A              ; branch ahead if bit is 0
                 
-                ldd         altCounterHigh      ; reading alternate avoids clearing TOF
-                subd        $205D               ; subtract counter value written in ICI
-                subd        #$4E20              ; subtract 20000 decimal
-                bcs         .LCC1A              ; branch if altCounterHigh is less
+                ldd         altCounterHigh          ; reading alternate avoids clearing TOF
+                subd        iciStartupValue     ; subtract counter value written in ICI
+                subd        #$4E20                  ; subtract 20000 decimal
+                bcs         .LCC1A                  ; branch if altCounterHigh is less
                 
-                ldaa        $2059
-                oraa        #$20                ; set 2059.5
-                staa        $2059
+                ldaa        bits_2059
+                oraa        #$20                ; set bits_2059.5
+                staa        bits_2059
 
 .LCC1A          jsr         sciService          ; call serial port service routine
                 jsr         LF0D5               ; update timers (also returns 16-bit counter in A-B)
                 
 ;-----------------------------------------------------------
 ; This code section re-inititializes the  MPU registers
-; every 20th time through the code. X2037 is used as the
-; counter for this.
+; every 20th time through the code. mpuReInitCounter is used
+; as the counter for this.
 ;-----------------------------------------------------------
-                ldaa        $2037               ; counter varies between zero and 20
+                ldaa        mpuReInitCounter    ; counter varies between zero and 20
                 cmpa        #$14                ; compare with 20 decimal
                 beq         .LCC2A              ; branch ahead if equal to 20
                 
@@ -551,7 +551,7 @@ ENDC
                 bra         .LCC53              ; and branch ahead to store it
 
                                                 ; start MPU re-init code
-.LCC2A          ldd         $2035               ; X2035 is never initialized and is otherwise unused
+.LCC2A          ldd         codeErrorWord       ; never initialized and otherwise unused (to be deleted)
                 subd        #$1262              ; so this is old obsolete code
                 beq         .LCC52              ; never (or almost never) branches
 
@@ -572,7 +572,7 @@ ENDC
                 staa        timerCntrlReg2      ; low 2 bits are read-only
 
 .LCC52          clra                            ; the 'never used' branch label
-.LCC53          staa        $2037               ; store the zero through 20 counter
+.LCC53          staa        mpuReInitCounter    ; store the zero through 20 counter
 
 ;---------------------------------------------------------------------
 ; This code was added about the time that the ECU part number changed
@@ -580,15 +580,15 @@ ENDC
 ; counter (X207E) and executes every 80th time through. The value 80
 ; comes from the data section at address XC259.
 ;---------------------------------------------------------------------
-                inc         $207E               ; counter increments 0 through 80
-                ldaa        $C259               ; data value is 80
-                cmpa        $207E               ; compare counter with 80
-                bcc         .LCC76              ; branch down near end of loop if counter < 80
+                inc         zeroTo80Counter     ; counter increments 0 through 80
+                ldaa        $C259                   ; data value is 80
+                cmpa        zeroTo80Counter     ; compare counter with 80
+                bcc         .LCC76                  ; branch down near end of loop if counter < 80
                 
-                clr         $207E               ; counter is 80, so reset it to zero
+                clr         zeroTo80Counter     ; counter is 80, so reset it to zero
 
-                ldaa        $2047               ; this code executes every 80th time through
-                bita        #$10                ; test X2047.4 (a coolant temp related bit)
+                ldaa        bits_2047           ; this code executes every 80th time through
+                bita        #$10                ; test Xbits_2047.4 (a coolant temp related bit)
                 beq         .LCC76              ; if zero, branch to skip section
                 
                 ldaa        $0087
@@ -604,18 +604,18 @@ ENDC
 ;-----------------------------------------------------------
 ; This code section is executed 79 out of 80 times through
 ;-----------------------------------------------------------
-.LCC78          jsr         LF5F0               ; this routine can reset X204B/4C to 50, rtns $00 or $FF in A accum
+.LCC78          jsr         LF5F0               ; this s/r can reset rpmIndicatorDelay to 50, rtns $00 or $FF in A accum
                 beq         .LCCEF              ; branch ahead if $00 was returned
                 
-                ldaa        $2047               ; bits value
-                bita        #$04                ; test X2047.2 (VSS failure bit)
+                ldaa        bits_2047           ; bits value
+                bita        #$04                ; test bits_2047.2 (VSS failure bit)
                 bne         .LCCEF              ; branch down if road speed sensor failure
                 
                 jsr         LF831               ; IACV (stepper motor) fault test subroutine
                 jsr         LF611               ; 1670 RPM counter subroutine
                 
 ;-----------------------------------------------------------
-;             Calculate Value at X204F/50
+;             Calculate 'mafVariable'
 ;
 ; This code block is similar to one found in idelControl.asm
 ; (nead .LD8CE) It's executed only when eng RPM > 1670.
@@ -623,28 +623,28 @@ ENDC
 ; Control Valve (IACV).
 ;-----------------------------------------------------------
                 
-                ldaa        $2047
-                bita        #$08                ; test X2047.3 (1 means RPM > 1670 for a short time)
+                ldaa        bits_2047
+                bita        #$08                ; test bits_2047.3 (1 means RPM > 1670 for a short time)
                 beq         .LCCEF              ; branch down if bit is zero
 
 ;-----------------------------------------------------------
 ; This code is executed only when eng RPM > 1670
 ;-----------------------------------------------------------
                 sei                             ; set interrupt mask
-                bita        #$01                ; test X2047.0
+                bita        #$01                ; test bits_2047.0
                 bne         .LCCE5              ; branch ahead if bit is set
                 
-                oraa        #$01                ; set X2047.0
-                staa        $2047               ; store X2047
+                oraa        #$01                ; set bits_2047.0
+                staa        bits_2047           ; store bits_2047
                 
-                ldaa        $2048               ; initial (middle) value is 128
+                ldaa        iacvVariable        ; initial (middle) value is 128
                 cmpa        #$80                ; is value > 128
                 bcc         .LCCC6
-;----------------------------
-; X2048 is less than 128
-;----------------------------
+;------------------------------
+; iacvVariable is less than 128
+;------------------------------
                 ldaa        #$80                ; load 128
-                suba        $2048               ; subtract value to get delta below 128
+                suba        iacvVariable        ; subtract value to get delta below 128
                 ldab        $C25C               ; this value is in the range of 6 to 8
                 mul                             ; multiply delta by this value
                 std         $00C8               ; store 16-bit result in temporary location
@@ -664,12 +664,12 @@ ENDC
                 bcc         .LCCC1              ; branch if no underflow
                 ldd         #$0000              ; else limit value to $0000
 
-.LCCC1          std         $204F               ; store 204F/50
+.LCCC1          std         mafVariable
                 bra         .LCCE5
                 
-;----------------------------
-; X2048 is greater than 128
-;----------------------------
+;---------------------------------
+; iacvVariable is greater than 128
+;---------------------------------
 .LCCC6          suba        #$80                ; subtract 128 to get delta above 128
                 ldab        $C25C               ; this value is in the range of 6 to 8
                 mul                             ; multiply delta by this value
@@ -691,17 +691,17 @@ ENDC
                 bcc         .LCCE2              ; branch if no overflow
                 ldd         #$FFFF              ; else limit value to $FFFF
 
-.LCCE2          std         $204F               ; store X204F/50
+.LCCE2          std         mafVariable
 
 ;----------------------------
-.LCCE5          ldaa        $2059
-                bita        #$01                ; test X2059.0 (signal to close stepper mtr?)
+.LCCE5          ldaa        bits_2059
+                bita        #$01                ; test bits_2059.0 (signal to close stepper mtr?)
                 bne         .LCCEF
                 jsr         LF63A               ; may set stepper mtr to close by 30 steps
 ;----------------------------
 ; End of 1670 RPM code
 ;----------------------------
-.LCCEF          jsr         LF8B4               ; calculate X2048
+.LCCEF          jsr         CalcIacvVariable    ; calculate IACV related variable
 
 .LCCF2          cli                             ; clear interrupt mask
                 ldaa        iacMotorStepCount   ; load stepper motor adjust value

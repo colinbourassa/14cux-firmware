@@ -1,8 +1,9 @@
 ;------------------------------------------------------------------------------
 ;   14CUX Firmware Rebuild Project
 ;
-;   File Date: 14-Nov-2013  Initial file.
+;   File Date: 14-Nov-2013
 ;              26-Mar-2014  Updated comments.
+;                           Replaced hard addresses with labels.
 ;
 ;   Description:
 ;       ADC Routine - Throttle Pot - Channel 3 (10-bit conversion)
@@ -149,24 +150,23 @@ adcRoutine3     ldaa        $008B               ; load bits value
                 bne         .LCD8F              ; branch ahead if X0086.0 is set
                 
                 ldx         $C1E3               ; data value is $FFEC (minus 20)
-                stx         $00B5               ; reset 00B5/B6 to -20
+                stx         idleControlValue    ; reset 'idleControlValue' to -20
                 ldab        $0088
                 andb        #$9F                ; clr 0088 bits 6:5
                 stab        $0088
                 ldab        #$64
-                stab        $203E               ; (unused)
+                stab        unusedValue         ; (unused)
                 ldab        $0087
                 bitb        #$40                ; test 0087.6 (eng RPM GT idle threshold)
                 bne         .LCD8F              ; branch ahead if RPM is high enough
 
                 ldab        $C154               ; eng RPM is low (val is 40 dec)
-                stab        $00B3               ; reset 00B3 to 40 if eng RPM is LT threshold (stepper mtr related?)
-                                                ; (00B3 is idle speed adjustment)
+                stab        idleSpeedDelta      ; reset to 40 if eng RPM is LT threshold
 
-.LCD8F          ldab        $2059
-                bitb        #$04                ; test 2059.2 (changed during RTs)
+.LCD8F          ldab        bits_2059
+                bitb        #$04                ; test bits_2059.2 (changed during RTs)
                 bne         .LCDFC
-                ldab        $0073               ; zero for D90, for RR: zero with 4s and 10s (stepper mtr rel.)
+                ldab        iacvValue2          ; zero for D90, for RR: zero with 4s and 10s
                 bne         .LCDF4
                 ldab        $0087
                 bitb        #$40                ; test 0087.6 (eng RPM GT threshold)
@@ -177,10 +177,10 @@ adcRoutine3     ldaa        $008B               ; load bits value
                 bcs         .LCDFC              ; branch ahead if eng speed is GT 2700 RPM
                 ldab        iacMotorStepCount
                 bne         .LCDFC              ; branch ahead if iacMotorStepCount is not zero
-                ldab        $2038
-                bitb        #$20                ; test 2038.5
+                ldab        bits_2038
+                bitb        #$20                ; test bits_2038.5
                 bne         .LCDFC
-                ldd         $2042               ; only code area that uses 2042
+                ldd         throttlePotCounter  ; only code area that uses this
                 bne         .LCDD2
                 ldab        $008B
                 bitb        #$01                ; test 008B.0 (road speed GT 4)
@@ -193,42 +193,42 @@ adcRoutine3     ldaa        $008B               ; load bits value
 ;-------------------------------
 ; This is unused code
 ;-------------------------------
-.unused         ldab        $2038
+.unused         ldab        bits_2038
                 orab        #$02  
-                stab        $2038
+                stab        bits_2038
                 ldaa        $0086
                 bra         .LCDFC
 
 ;-------------------------------
 ;
 ;-------------------------------
-.LCDD2          ldd         $2042               ;
+.LCDD2          ldd         throttlePotCounter               ;
                 subd        $C7CC               ; value is $0001
                 bcc         .LCDDD
                 ldd         #$0000
 
-.LCDDD          std         $2042               ; end of 2042 use
+.LCDDD          std         throttlePotCounter  ; end use of throttlePotCounter
                 ldaa        $0086               ; load 0086 into A
                 ldab        $008A
                 andb        #$FE                ; clr 008A.0 (stepper mtr direction bit, 0 = open)
                 stab        $008A
                 ldab        $C161               ; value is $0A
-                subb        $0071               ; occasionally init to 6 and decremented to zero
+                subb        iacvValue0          ; occasionally init to 6 and decremented to zero
                 stab        iacMotorStepCount
-                stab        $0073               ; zero for D90, for RR: zero with 4s and 10s (stepper mtr rel.)
-                clr         $0071               ; occasionally init to 6 and decremented to zero
+                stab        iacvValue2
+                clr         iacvValue0
 
 
-.LCDF4          ldab        $2059
-                orab        #$04                ; set 2059.2
-                stab        $2059
+.LCDF4          ldab        bits_2059
+                orab        #$04                ; set bits_2059.2
+                stab        bits_2059
 
 
 .LCDFC          oraa        #$81                ; set 0086.7 and 0086.0
                 staa        $0086               ; store 0086
-                ldaa        $008C
-                oraa        #$04                ; set 008C.2
-                staa        $008C
+                ldaa        bits_008C
+                oraa        #$04                ; set bits_008C.2
+                staa        bits_008C
                 cli
                 bra         .LCE55
 ;------------------------------------------------
@@ -238,14 +238,14 @@ adcRoutine3     ldaa        $008B               ; load bits value
 .LCE09          subd        #$0005              ; subtract another 5 from TPS reading
                 bcs         .LCE55              ; branch down if carry set
                 
-                ldaa        $008D
-                bita        #$10                ; test 008D.4 (usually zero)
+                ldaa        bits_008D
+                bita        #$10                ; test bits_008D.4 (usually zero)
                 beq         .LCE23
                 
-                anda        #$EF                ; clr  008D.4
-                staa        $008D
+                anda        #$EF                ; clr  bits_008D.4
+                staa        bits_008D
                 ldd         #$0000
-                std         $0098               ; set 0098/99 down counter to zero
+                std         purgeValveTimer2    ; set down counter to zero
                 ldaa        $00DD
                 anda        #$F7                ; clear 00DD.3
                 staa        $00DD
@@ -255,18 +255,18 @@ adcRoutine3     ldaa        $008B               ; load bits value
                 beq         .LCE30
                 
                 clrb
-                stab        $00C1               ; numbers 19 and 255 predominate
+                stab        tpsClosedLoopCntr   ; counts to 19, can be reset to zero or 255
                 ldx         throttlePotMinimum
-                stx         $0061               ; secondary throttle pot value location
+                stx         throttlePot24bit    ; store as upper 16-bits of 24-bit value
 
 
 .LCE30          anda        #$7E                ; clr 0086.7 and 0086.0
                 oraa        #$04                ; set 0086.2
                 staa        $0086
-                ldaa        $2059
-                anda        #$FB                ; clr 2059.2
-                staa        $2059
-                ldaa        $00C1               ; numbers 19 and 255 predominate
+                ldaa        bits_2059
+                anda        #$FB                ; clr bits_2059.2
+                staa        bits_2059
+                ldaa        tpsClosedLoopCntr
                 inca
                 cmpa        $C13B               ; for 3360 code, value is $14 (20 dec)
                 bcs         .LCE4C              ; branch ahead if value is LT 20
@@ -274,10 +274,10 @@ adcRoutine3     ldaa        $008B               ; load bits value
                 anda        #$9F                ; clr 0088 bits 6:5
                 staa        $0088
 
-.LCE4C          ldaa        $0073               ; zero for D90, for RR: zero with 4s and 10s (stepper mtr rel.)
+.LCE4C          ldaa        iacvValue2
                 beq         .LCE55
                 sei
-                jsr         LEE12               ; deals with 0073 and stepper mtr adj value
+                jsr         LEE12               ; deals with iacvValue2 and stepper mtr adj value
                 cli
 
 
@@ -307,24 +307,24 @@ adcRoutine3     ldaa        $008B               ; load bits value
                 ldaa        $0085
                 bita        #$20                ; test 0085.5
                 beq         .LCEAA              ; branch if 0085.5 is zero
-                ldaa        $006C               ; a TP related value
+                ldaa        tpMinCounter        ; slows down TPmin adjustment
                 cpx         throttlePot         ; X reg is still TPMin, cmpr with measured throttle pot value
                 bhi         .LCE90              ; branch if TPMin is greater than measured value
                 ldab        ignPeriod
                 cmpb        #$17                ; $1700 = 1274 RPM
                 bls         .LCEAA              ; branch ahead if PW is LT $1700 (RPM GT 1274)
 
-                inca                            ; increment value from 006C
-                bne         .LCEB2              ; and branch to store 006C if not zero
+                inca                            ; increment tpMinCounter
+                bne         .LCEB2              ; and branch to store tpMinCounter if not zero
                 inx                             ; this is probably still TPMin being incremented
                 bra         .LCE94
                                                 ; code above branches here if measured value is LT TPMin
-.LCE90          deca                            ; decrement value from 006C
-                bne         .LCEB2              ; and branch to store 006C if not zero
+.LCE90          deca                            ; decrement value from tpMinCounter
+                bne         .LCEB2              ; and branch to store tpMinCounter if not zero
                 dex                             ; this is probably still TPMin being decremented
 
-.LCE94          ldaa        $008C
-                bita        #$40                ; test 008C.6 (indicates data corrupted or ram fail)
+.LCE94          ldaa        bits_008C
+                bita        #$40                ; test bits_008C.6 (indicates data corrupted or ram fail)
                 bne         .LCEA8
                 stx         $00C8               ; saved data is OK so store new TPMin at 00C8/C9 (temporary)
                 ldaa        $00C9
@@ -339,22 +339,22 @@ adcRoutine3     ldaa        $008B               ; load bits value
                                                 ; there are 4 branches (above) to here
 .LCEAA          ldaa        $0087               ; code jumps here from above if (todo)
                 bita        #$08                ; test 0087.3
-                bne         .LCEB4              ; if 0087.3 is set, branch to store 006C instead of reinit to 52 dec
-                ldaa        #$34                ; the 006C init value
+                bne         .LCEB4              ; if 0087.3 set, branch to store tpMinCounter instead of reinit
+                ldaa        #$34                ; the tpMinCounter init value
 
-.LCEB2          staa        $006C               ; throttle pot related value
+.LCEB2          staa        tpMinCounter        ; this slows down TPmin adjustment
 
 .LCEB4          ldaa        $008B               ; bits
-                tst         $205B               ; 205B.7 is cleared at boot
-                bmi         .LCECD              ; branch if 205B.7 is set
+                tst         bits_205B           ; bits_205B.7 is cleared at boot
+                bmi         .LCECD              ; branch if bits_205B.7 is set
                 ldab        $0085
                 bitb        #$81                ; test 0085.7 and 0085.0
                 bne         .LCECD              ; branch ahead if either bit is set
                 oraa        #$20                ; set 008B.5 (throttle is closing)
                 staa        $008B
-                ldab        $205B
-                orab        #$80                ; set 205B.7 (008B.5 and 205B.7 are set together)
-                stab        $205B
+                ldab        bits_205B
+                orab        #$80                ; set bits_205B.7 (008B.5 and bits_205B.7 are set together)
+                stab        bits_205B
                                                 ; 2 branches and fall-thru
 .LCECD          bita        #$20                ; test 008B.5
                 bne         .LCED4              ; branch to skip jump if 008B.5 is set
@@ -366,13 +366,13 @@ adcRoutine3     ldaa        $008B               ; load bits value
 .LCED4          ldd         tpFastOpenThreshold
                 std         $00CE
                 jsr         LF0D5               ; update timers (returns 16-bit counter in A-B)
-                subd        $00C2               ; value may be zero
+                subd        tpsTimer            ; value may be zero
                 subd        #$4E20              ; this is 20000 dec
                 bcc         .chkChangeRate
                 jmp         .LCF98              ; near end of this routine
 
 .chkChangeRate  ldd         throttlePot
-                subd        $00A4               ; previous throttle pot value (only saved when closing)
+                subd        savedThrottlePot    ; previous throttle pot value (only saved when closing)
                 bcs         .backoffJmp         ; throttle is closing (or only opening slowly)
                 subd        $00CE               ; throttle value is same or higher (subtract $0018 from delta)
                 bcs         .backoffJmp         ; throttle is opening quickly
@@ -384,9 +384,9 @@ adcRoutine3     ldaa        $008B               ; load bits value
                 ldaa        $008B
                 anda        #$DF                ; clr 008B.5 (zero may indicate throttle opening rapidly)
                 staa        $008B
-                ldaa        $201F
-                oraa        #$0C                ; set 201F.3 and 201F.2 to indicate TP is doing a fuel adjust
-                staa        $201F
+                ldaa        bits_201F
+                oraa        #$0C                ; set bits_201F.3 and bits_201F.2 to indicate TP is doing a fuel adjust
+                staa        bits_201F
                 ldaa        coolantTempCount
                 ldab        #$0C                ; length of table is 12d
                 ldx         #accelPumpTable
@@ -488,9 +488,9 @@ adcRoutine3     ldaa        $008B               ; load bits value
 ;    Throttle is closing or not opening quickly
 ;------------------------------------------------------------------------------
 .notOpeningFast ldd         throttlePot
-                std         $00A4               ; X00A4/A5 is only written and used in this TP routine
+                std         savedThrottlePot    ; local value
                 jsr         LF0D5               ; update timers (returns 16-bit counter in A-B)
-                std         $00C2               ; value may be zero
+                std         tpsTimer            ; value may be zero
 
 .LCF98          ldab        $00DC               ; bits
                 ldaa        $008B               ; bits
