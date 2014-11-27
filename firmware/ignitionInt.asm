@@ -1,7 +1,8 @@
 ;------------------------------------------------------------------------------
 ;   14CUX Firmware Rebuild Project
 ;
-;   File Date: 14-Nov-2013
+;   File Date: 14-Nov-2013  Initial file.
+;              26-Mar-2014  Corrected a few comments.
 ;
 ;   Description:    Input Capture Interrupt
 ;
@@ -3662,10 +3663,10 @@ ELSE
 ENDC
 
 ;-----------------------------------------------
-; Right Bank Timer Setup
+; Right Bank Timer Setup (X0088.7 = 0)
 ;-----------------------------------------------
                 ldaa        timerCntrlReg1      ; load timer control register 1
-                anda        #$FE                ; clr OLVL1 (P21 for Odd Injector Bank)
+                anda        #$FE                ; clr OLVL1 (P21 for even Injector Bank)
                 staa        timerCntrlReg1
                 ldaa        $201F               ; this bit is set in TPS routine
                 bita        #$04                ; test X201F.2 (does this mean TPS code is doing a fuel adjust?)
@@ -3721,7 +3722,7 @@ ENDC
 
 .LEA71          bra         .LEAD5              ; LEAD5 = toggle bank bit and fall into RPM calc
 ;-----------------------------------------------
-; Left Bank Timer Setup
+; Left Bank Timer Setup (X0088.7 = 1)
 ;-----------------------------------------------
 
 .LEA73          ldaa        timerCntrlReg1

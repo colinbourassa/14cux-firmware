@@ -1,7 +1,8 @@
 ;------------------------------------------------------------------------------
 ;   14CUX Firmware Rebuild Project
 ;
-;   File Date: 14-Nov-2013
+;   File Date: 14-Nov-2013  Initial file.
+;              26-Mar-2014  Updated comments.
 ;
 ;   Description:
 ;       ADC Routine - Throttle Pot - Channel 3 (10-bit conversion)
@@ -128,7 +129,7 @@ adcRoutine3     ldaa        $008B               ; load bits value
 ;-------------------------------
 
 ;-------------------------------
-.LCD5B          jmp         .LCE09              ; 'bcc' just above LCD69 uses this
+.LCD5B          jmp         .LCE09              ; 'bcc' just below uses this
 ;-------------------------------
 ; Engine is running
 ;-------------------------------
@@ -234,11 +235,13 @@ adcRoutine3     ldaa        $008B               ; load bits value
 ; Code jumps down to here when TPS is greater
 ; than TPmin by at least 7 counts.
 ;------------------------------------------------
-.LCE09          subd        #$0005
-                bcs         .LCE55
+.LCE09          subd        #$0005              ; subtract another 5 from TPS reading
+                bcs         .LCE55              ; branch down if carry set
+                
                 ldaa        $008D
-                bita        #$10                ; test 008D.4 (stayed zero for both RTs)
+                bita        #$10                ; test 008D.4 (usually zero)
                 beq         .LCE23
+                
                 anda        #$EF                ; clr  008D.4
                 staa        $008D
                 ldd         #$0000
@@ -250,6 +253,7 @@ adcRoutine3     ldaa        $008B               ; load bits value
 .LCE23          ldaa        $0086
                 bita        #$01                ; test 0086.0
                 beq         .LCE30
+                
                 clrb
                 stab        $00C1               ; numbers 19 and 255 predominate
                 ldx         throttlePotMinimum
@@ -391,14 +395,21 @@ adcRoutine3     ldaa        $008B               ; load bits value
                 ldaa        $0C,x               ; load value fron 2nd row of table
                 cmpa        #$03                ; compare value with #03
                 bcs         .LCF8C              ; skip fueling adjustment if engine is cold
-;----------------------------
+                
                 std         $00C8               ; store X00C8 = value from table, X00C9 = zero
-                ldaa        timerCntrlReg1      ; Timer Control Reg 1 (Left Bank)
-                anda        #$FE                ; clr OLVL1 (P21 --> Odd Injector Bank)
+                
+;------------------------------------
+; Timer 1 (Right Bank, same polarity)
+;------------------------------------
+                ldaa        timerCntrlReg1      ; Timer Control Reg 1
+                anda        #$FE                ; clr OLVL1 (P21 --> Right or Even Injector Bank)
                 staa        timerCntrlReg1
-                ldaa        timerStsReg         ; test OCF 1
-                bita        #$08                ; test output compare flag (OCF1)
-                bne         .LCF32              ; branch ahead if OCF1 is high
+                ldaa        timerStsReg         ; 
+                bita        #$08                ; test output compare flag (OCF1) for right bank
+                bne         .LCF32              ; branch ahead if OCF1 is high (injectors are open)
+                
+;----------------------------
+; Injectors are closed
 ;----------------------------
                 ldd         ocr1High            ; modify Output Compare Reg 1 by adding the
                 addd        $00C8               ;   value from the data table
@@ -409,12 +420,13 @@ adcRoutine3     ldaa        $008B               ; load bits value
                 cmpa        timerStsReg
                 ldd         ocr1High
                 std         ocr1High            ; this sequence clears OCF1
-                bra         .LCF4F
+                bra         .LCF4F              ; branch ahead to do left bank
 ;----------------------------
-                                                ; code above branches here if OCF1 is high
+; Injectors are open
+;----------------------------
 .LCF32          ldd         altCounterHigh      ; reading alternate avoids clearing TOF
                 addd        #$0013              ; add 19d to the counter
-                std         ocr1High
+                std         ocr1High            ; store in Output Compare Reg 1
                 cmpa        timerStsReg
                 std         ocr1High            ; this sequence clears OCF1
                 addd        $00C8               ; create new value by adding X00C8 (from data table)
@@ -426,14 +438,17 @@ adcRoutine3     ldaa        $008B               ; load bits value
                 std         ocr1High            ; and store it in the output compare reg
                 cmpa        timerStsReg
                 std         ocr1High            ; this sequence clears OCF1
-;----------------------------
-
+;---------------------------------------
+; Timer 3 (Left Bank, reversed polarity)
+;---------------------------------------
 .LCF4F          ldaa        timerCntrlReg1
                 oraa        #$04                ; set OLVL3 (P12 --> Even Injector Bank)
                 staa        timerCntrlReg1
                 ldaa        timerStsReg
                 bita        #$20                ; test bit 5 in timerStsReg (OCF?)
                 bne         .LCF6F
+;----------------------------
+; Injectors are closed
 ;----------------------------
                 ldd         ocr3high            ; modify Output Compare Reg 3 by adding the
                 addd        $00C8               ;   value from the data table
@@ -445,6 +460,8 @@ adcRoutine3     ldaa        $008B               ; load bits value
                 ldd         ocr3high
                 std         ocr3high            ; this sequence clears OCF3
                 bra         .LCF8C
+;----------------------------
+; Injectors are open
 ;----------------------------
                                                 ; code above branches here if OCF3 is high
 .LCF6F          ldd         altCounterHigh      ; reading alternate avoids clearing TOF
@@ -461,7 +478,9 @@ adcRoutine3     ldaa        $008B               ; load bits value
                 std         ocr3high            ; and store it in the output compare reg
                 cmpa        timerStsReg
                 std         ocr3high            ; this sequence clears OCF1
-
+                
+                
+;----------------------------
 .LCF8C          cli                             ; clear interrupt mask
                 bra         .LCF98
 
