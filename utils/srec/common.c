@@ -1,6 +1,6 @@
 /*
 	common.c - Common functions for both srec2bin and bin2srec
-	Copyright (C) 1998-2012  Anthony Goffart
+	Copyright (C) 1998-2015  Anthony Goffart
 
 	This file is part of SREC2BIN and BIN2SREC
 

@@ -36,6 +36,9 @@ V1.40   Fixed bin2srec ending on address 0xFFFFFFFF
 V1.41   Fixed spelling errors
 V1.42   Changed return code from srec2bin if output file fails to be created
 V1.43   Use S6 instead of S5 count record when record count is greater than 65535
+V1.44   Use <stdbool.h> for boolean types (not published)
+V1.45   Fix compiler warnings for ignored return values (not published)
+V1.46   Fix srec2bin creation when last address is 0xFFFFFFFFF
 
 The utilities now compile using the free MinGW GNU based tools
 as well as GCC under Linux using Gnu Make.
@@ -44,4 +47,4 @@ This software is provided under the terms of the GNU General Public Licence.
 See the enclosed file gpl-3.0.txt
 
 Ant Goffart
-August 2012
+January 2015

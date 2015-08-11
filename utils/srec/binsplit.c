@@ -1,6 +1,6 @@
 /*
 	BINSPLIT - Split a binary file into 2 or 4 interleaved pieces
-	Copyright (C) 2010-2012  Anthony Goffart
+	Copyright (C) 2010-2015  Anthony Goffart
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -20,12 +20,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "common.h"
 
 #define HEADER1 "\nBINSPLIT " SREC_VER " - Split a binary file into 2 or 4 interleaved pieces.\n"
 
-int verbose = TRUE;
+int verbose = true;
 int num_files = 2;
 
 char *infilename;
@@ -127,7 +128,7 @@ int main(int argc, char *argv[])
 	for (i = 1; i < argc; i++)
 	{
 		if (!strcmp(argv[i], "-q"))
-			verbose = FALSE;
+			verbose = false;
 
 		else if (!strcmp(argv[i], "-2"))
 			num_files = 2;

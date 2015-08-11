@@ -1,19 +1,12 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#define SREC_VER "1.43"
+#define SREC_VER "1.46"
 
-#define HEADER2 "Copyright (c) 2000-2014 Ant Goffart - http://www.s-record.com/\n\n"
+#define HEADER2 "Copyright (c) 2000-2015 Ant Goffart - http://www.s-record.com/\n\n"
 
 #include <stdio.h>
 #include <stdint.h>
-
-#ifndef FALSE
-#define FALSE (0)
-#endif
-#ifndef TRUE
-#define TRUE (~FALSE)
-#endif
 
 #define max(a,b) (((a)>(b))?(a):(b))
 #define min(a,b) (((a)<(b))?(a):(b))

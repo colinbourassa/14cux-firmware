@@ -1,6 +1,6 @@
 /*
 	SREC2BIN - Convert Motorola S-Record to binary file
-	Copyright (C) 1998-2012  Anthony Goffart
+	Copyright (C) 1998-2015  Anthony Goffart
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "common.h"
 
@@ -34,7 +35,7 @@ uint32_t max_addr = 0;
 uint32_t min_addr = 0;
 
 uint8_t filler = 0xff;
-int verbose = TRUE;
+int verbose = true;
 
 /***************************************************************************/
 
@@ -63,7 +64,7 @@ void parse(int scan, uint32_t *max, uint32_t *min)
 
 	do
 	{
-		fgets(line, LINE_LEN, infile);
+		if(fgets(line, LINE_LEN, infile));
 
 		if (line[0] == 'S')								/* an S-record */
 		{
@@ -82,7 +83,6 @@ void parse(int scan, uint32_t *max, uint32_t *min)
 				}
 
 				byte_count = (char_to_uint(line[2]) << 4) + char_to_uint(line[3]);
-
 				byte_count -= (addr_bytes + 1);
 
 				if (scan)
@@ -90,8 +90,8 @@ void parse(int scan, uint32_t *max, uint32_t *min)
 					if (*min > address)
 						*min = address;
 
-					if (*max < (address + byte_count))
-						*max = address + byte_count;
+					if (*max < (address + (byte_count - 1)))
+						*max = address + (byte_count - 1);
 				}
 				else
 				{
@@ -115,7 +115,6 @@ void parse(int scan, uint32_t *max, uint32_t *min)
 	while(!feof(infile));
 
 	rewind(infile);
-	*max -= 1;
 }
 
 /***************************************************************************/
@@ -137,7 +136,7 @@ int process(void)
 		fprintf(stderr, "Output binary file: %s\n", outfilename);
 	}
 
-	parse(TRUE, &pmax, &pmin);
+	parse(true, &pmax, &pmin);
 
 	min_addr = min(min_addr, pmin);
 	max_addr = max(pmax, min_addr + max_addr);
@@ -161,7 +160,7 @@ int process(void)
 			fwrite(buf, 1, 32, outfile);
 		fwrite(buf, 1, remain, outfile);
 
-		parse(FALSE, &pmax, &pmin);
+		parse(false, &pmax, &pmin);
 		fclose(outfile);
 	}
 	else
@@ -186,7 +185,7 @@ int main(int argc, char *argv[])
 	for (i = 1; i < argc; i++)
 	{
 		if (!strcmp(argv[i], "-q"))
-			verbose = FALSE;
+			verbose = false;
 
 		else if (!strcmp(argv[i], "-a"))
 			max_addr = str_to_uint32(argv[++i]) - 1;

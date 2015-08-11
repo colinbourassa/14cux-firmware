@@ -1,6 +1,6 @@
 /*
 	BIN2SREC  - Convert binary to Motorola S-Record file
-	Copyright (C) 1998-2012  Anthony Goffart
+	Copyright (C) 1998-2015  Anthony Goffart
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "common.h"
 
@@ -31,8 +32,8 @@ uint32_t addr_offset = 0;
 uint32_t begin_addr;
 uint32_t end_addr;
 int addr_bytes = 2;
-int do_headers = TRUE;
-int verbose = TRUE;
+int do_headers = true;
+int verbose = true;
 int line_length = 32;
 
 
@@ -112,7 +113,7 @@ void process(void)
 			checksum += c;
 		}
 
-		fread(buf, 1, this_line, infile);
+		if(fread(buf, 1, this_line, infile));
 
 		for (i = 0; i < this_line; i++)
 		{
@@ -168,15 +169,15 @@ int main(int argc, char *argv[])
 {
 	int i;
 	uint32_t size;
-	int offset_specified = FALSE;
-	int end_specified = FALSE;
+	int offset_specified = false;
+	int end_specified = false;
 
 	for (i = 1; i < argc; i++)
 	{
 		if (!strcmp(argv[i], "-o"))
 		{
 			addr_offset = str_to_uint32(argv[++i]);
-			offset_specified = TRUE;
+			offset_specified = true;
 			continue;
 		}
 
@@ -189,7 +190,7 @@ int main(int argc, char *argv[])
 		else if (!strcmp(argv[i], "-e"))
 		{
 			end_addr = str_to_uint32(argv[++i]);
-			end_specified = TRUE;
+			end_specified = true;
 			continue;
 		}
 
@@ -211,13 +212,13 @@ int main(int argc, char *argv[])
 
 		else if (!strcmp(argv[i], "-s"))
 		{
-			do_headers = FALSE;
+			do_headers = false;
 			continue;
 		}
 
 		else if (!strcmp(argv[i], "-q"))
 		{
-			verbose = FALSE;
+			verbose = false;
 			continue;
 		}
 
