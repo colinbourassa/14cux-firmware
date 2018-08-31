@@ -12,7 +12,7 @@
 ;
 ;
 ;   R3652 (Cold Weather Chip)
-; 
+;
 ;   Tune R3652 was part of a late upgrade (under Operation Pride) for NAS 3.9
 ;   Land Rovers as a result of cold start complaints. The changes are based on
 ;   R3526 code and are relatively minor. The changes only affect starting and
@@ -42,7 +42,7 @@ NEW_STYLE_MIL_CODE      = 1
 
 ;----------------------------------------------------------
 ; This section recreates the data at the end of the ROM
-; (just before the vectors). The only thing here that 
+; (just before the vectors). The only thing here that
 ; affects the code is the checksum fixer.
 ;----------------------------------------------------------
 CRC16                   = $9F52     ; addr FFE0/E1
@@ -86,7 +86,7 @@ SIM_CONTROL_BYTE    EQU  $55
 
 ;----------------------------------------------------------
 ; These values can differ from one tune version to the
-; next, so they are defined here. 
+; next, so they are defined here.
 ;----------------------------------------------------------
 initialRpmLimit   = $056C   ; used in reset.asm (5403 RPM)
 initialRpmMargin  = $1B     ; used in reset.asm (LSB = 100 RPM)
@@ -308,7 +308,7 @@ accelPumpTable  DB          $00,$14,$28,$32,$3F,$52,$66,$7E,$8F,$AD,$C3,$D7 ; XC
 
 LC22F           DB          $01
                 DB          $02
-                
+
 hiRPMAdcMux     DB          $87,$02,$87,$86,$87,$02,$87
                 DB          $87,$87,$87,$87,$87,$87,$F7
 

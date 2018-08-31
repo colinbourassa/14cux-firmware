@@ -6,8 +6,8 @@
 ;   Description:
 ;       This file contains a number of miscellaneous routines.
 ;
-; 
-; 
+;
+;
 ; keepAlive
 ; LF0D5             (return timer value)
 ; indexIntoTable
@@ -35,7 +35,7 @@ keepAlive       ldaa        port1data
                 eora        #$80
                 staa        port1data
                 rts
-                
+
 ;------------------------------------------------------------------------------
 ; Return Timer Value
 ;
@@ -80,7 +80,7 @@ LF0D5           cli                             ; clear interrupt mask
 
 .LF0EE          ldd         counterHigh         ; clear TOF and return counter value
                 rts
-                
+
 ;------------------------------------------------------------------------------
 ;
 ; Index Into Table
@@ -106,7 +106,7 @@ indexIntoTable  cmpa        $01,x               ; subtract table value from cool
 .indexingRet    rts
 
 ;------------------------------------------------------------------------------
-; 
+;
 ; This routine is called from two places in the ICI, right after the call to
 ; LF171 which is later in this file.
 ;
@@ -145,18 +145,18 @@ LF0FC           pshx                            ; push X
                 bitb        #$71                ; test 4 bits in bits_008D (bits 6,5,4,0)
                 pulb                            ; restore original AB value (does not affect zero flag)
                 beq         .LF113              ; branch if all 4 bits are zero
-                
+
                 ldx         #$0001              ; X is now #$0001
 
 .LF113          lsrd                            ; AB = AB/2
                 dex
                 bne         .LF113              ; loops once or twice
-                
+
                 pulx                            ; pull X
                 rts                             ; return
 
 ;------------------------------------------------------------------------------
-; 
+;
 ; This routine is called from two places in the ICI.
 ;
 ; When entering, AB will be either left short term trim or right short term
@@ -232,19 +232,19 @@ LF135           ldaa        timer1value         ; load timer maintenance variabl
                 incb                            ; add 1 (an adjustment factor?)
                 sba                             ; subtract B from A
                 bcc         .LF14E              ; branch if result < timer1value
-                
+
                 ldab        $0088
                 eorb        #$08                ; toggle X0088.3
                 stab        $0088
                 bitb        #$08                ; test X0088.3
                 beq         .LF14B              ; branch ahead every other time
-                
+
                 dec         $00,x               ; decrement indexed value
 .LF14B          ldaa        $C0F4               ; $96 for R3526, $FF for TVR
 
 .LF14E          staa        timer1value         ; store maintenance variable
                 rts                             ; and return
-                
+
 ;------------------------------------------------------------------------------
 ;                        *** Countdown Timer 2 ***
 ;
@@ -269,19 +269,19 @@ LF151           ldaa        timer2Value         ; load timer maintenance variabl
                 incb                            ; add 1 (an adjustment factor?)
                 sba                             ; subtract B from A
                 bcc         .LF16D              ; branch if result < timer2Value
-                
+
                 ldab        bits_201F
                 eorb        #$01                ; toggle bits_201F.0
                 stab        bits_201F
                 bitb        #$01                ; test bits_201F.0
                 beq         .LF16A              ; branch ahead every other time
-                
+
                 dec         $00,x               ; 'closedLoopDelay' or 'startupTimerOdd'
 .LF16A          ldaa        $C0F4               ; $96 for R3526, $FF for TVR
 
 .LF16D          staa        timer2Value         ; store maintenance variable
                 rts                             ; and return
-                
+
 ;------------------------------------------------------------------------------
 ; This subroutine is called from the code area in the ICI that deals with the
 ; long-term Lambda trim.
@@ -295,7 +295,7 @@ LF151           ldaa        timer2Value         ; load timer maintenance variabl
 ;
 ; These values, like the trim values, have a neutral setting of $8000 and
 ; adjust up or down from there.
-; 
+;
 ; Coming into this routine, the 16-bit AB register is either of these values
 ; minus $8000 which means it will be a positive or negative number. The calling
 ; code knows the polarity and changes the negative number to it's absolute
@@ -307,7 +307,7 @@ LF171           psha                            ; push MSB
                 adda        #$02                ; add 2 to MSB ($0200 to value)
                 cmpa        #$04                ; this checks to within 512 counts of both ends
                 bhi         .LF1AB              ; if higher just branch to end and return
-                
+
                 ldaa        $0088               ; test bank indicator bit
                 bmi         .LF184              ; branch ahead if right bank
 ;------------------
@@ -316,7 +316,7 @@ LF171           psha                            ; push MSB
                 ldaa        bits_0089           ; load bits value
                 bita        #$10                ; test bits_0089.4
                 beq         .LF1AB              ; if zero, branch to pull A and return
-                bra         .LF18A              ; 
+                bra         .LF18A              ;
 ;------------------
 ; Left Bank
 ;------------------
@@ -349,7 +349,7 @@ LF171           psha                            ; push MSB
                 pulb                            ; pull B
 .LF1AB          pula                            ; pull A
                 rts                             ; return
-                
+
 ;------------------------------------------------------------------------------
 ;
 ; This subroutine is called from 2 places in the ICI. Once from rich condition
@@ -366,7 +366,7 @@ LF171           psha                            ; push MSB
 ;------------------------------------------------------------------------------
 LF1AD           ldaa        $0088               ; test bank indicator bit
                 bpl         .LF1BF              ; if 0088.7 is zero, branch to left side code
-                
+
 ;------------------
 ; Right Bank
 ;------------------
@@ -417,7 +417,7 @@ LF1D4           ldd         mafDirectHi
                 addd        $00A9
                 std         $00A9
                 rts
-                
+
 ;------------------------------------------------------------------------------
 ; This code is unused and is here for the sake of byte-for-byte test builds.
 ; Some labels were added for proper disassembly.

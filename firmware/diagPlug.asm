@@ -33,11 +33,11 @@ code
 adcRoutine14    ldab        $0086
                 bitb        #$10            ; test X0086.4 (1 means diag display already updated)
                 bne         .LD4BF          ; return if high (already updated)
-                
+
                 cmpa        #$80            ; cmpr ADC reading with $80
                 ldaa        $00DD           ; bits value (ldaa does not affect carry flag)
                 bcc         .LD4C0          ; branch ahead if reading GT $80 (meaning display present)
-                
+
                 bita        #$01            ; test 00DD.0
                 bne         .LD4DC          ; if bit is set, branch to check for errors
                 clr         obddDelayCounter ; clear up-counter (used for delay)
@@ -48,11 +48,11 @@ adcRoutine14    ldab        $0086
 .LD4C0          ldab        port1data
                 bitb        #$40            ; test P1.6 (fuel pump relay)
                 beq         .LD4D5          ; branch ahead if low (fuel pump ON)
-                
+
                 ldab        obddDelayCounter
                 incb                        ; increment delay counter
                 beq         .LD4D0          ; branch ahead if counter wraps to zero
-                
+
                 stab        obddDelayCounter
                 rts                         ; if here, delay is still active, so return
 ;--------------------------------------------------------------
@@ -90,7 +90,7 @@ adcRoutine14    ldab        $0086
 .LD4F1          asla                            ; * Start Loop * Clear fault bit. (left shift loop to replace the 1 with a 0)
                 decb
                 bne         .LD4F1              ; * End Loop *
-                
+
                 staa        $00,x               ; store it back
                 bra         .LD4D5              ; branch to set X0086.4 and return
 code

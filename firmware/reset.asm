@@ -55,7 +55,7 @@ code
 ;----------------------------
 reset           sei                             ; Set interrupt mask
                 lds         #$00FF              ; reset stack pointer
-                ldd         #$FFFE              ; 
+                ldd         #$FFFE              ;
                 std         port1ddr            ; all P1 & P2 pins to out (exc P20 pin-8, ignition coil)
                 ldab        #$FF                ;
                 stab        port4ddr            ;
@@ -79,7 +79,7 @@ reset           sei                             ; Set interrupt mask
                 ldaa        ramControl          ; load RAM control
                 oraa        #$40                ; set RAME bit (RAM at $40 to $FF)
                 staa        ramControl          ; write RAM control reg
-                
+
 ;----------------------------
 ; Clear internal memory
 ;----------------------------
@@ -91,7 +91,7 @@ reset           sei                             ; Set interrupt mask
                 inx
                 decb
                 bne         .zeroRAM_0054       ; *** End Zero Memory ***
-                
+
 ;----------------------------
 ; Init more regs and vars
 ;----------------------------
@@ -103,7 +103,7 @@ reset           sei                             ; Set interrupt mask
                 stab        $0086               ; set X0086.5 (clrd when RPM exceeds limit from fuel map)
                 ldab        #$01
                 stab        bits_008C           ; set bits_008C.0 (TP vs MAF in ICI, set for TP)
-                
+
 ;----------------------------
 ; Clear external memory
 ;----------------------------
@@ -115,7 +115,7 @@ reset           sei                             ; Set interrupt mask
                 inx
                 decb
                 bne         .zeroRAM_2000       ; *** End Zero Memory ***
-                
+
 ;----------------------------
 ; Init external memory
 ;----------------------------
@@ -123,7 +123,7 @@ reset           sei                             ; Set interrupt mask
                 staa        closedLoopDelay     ; this is a 1Hz startup count-down timer
                 ldaa        $C1C9               ; for R3526, value is $B2 (178 dec)
                 staa        $200A               ; used to calc fuel map load index
-                ldd	        #initialRpmLimit    ; see data file for value
+                ldd         #initialRpmLimit    ; see data file for value
                 std         rpmLimitRAM
                 ldaa        #initialRpmMargin   ; see data file for value
                 staa        $200B               ; store RPM safety margin
@@ -150,13 +150,13 @@ reset           sei                             ; Set interrupt mask
                 staa        tpMinCounter        ; slows down TPmin adjustment
                 ldaa        #$64
                 staa        unusedValue         ; (unused)
-                
+
 ;----------------------------
 ; Check for locked map & init
 ;----------------------------
                 ldaa        fuelMapLock         ; load fuel map lock value
                 beq         .LC92F              ; branch if unlocked (zero)
-                
+
                 ldaa        #$05                ; load 5
                 staa        fuelMapNumber       ; store as fuel map number
                 staa        fuelMapNumberBackup ; store as fuel map backup number
@@ -166,7 +166,7 @@ reset           sei                             ; Set interrupt mask
                 std         fuelMapPtr          ; store as fuel map base pointer
                 bra         .LC934              ; branch
 
-                                                
+
 ;----------------------------
 ; Init map 0 ADC table                          ; code branches here when fuel map is unlocked
 ;----------------------------
@@ -208,7 +208,7 @@ reset           sei                             ; Set interrupt mask
 ;----------------------------
 .initDefaults   ldd         #$0070              ; branches here is bad RAM checksum; init default values
                 std         throttlePotMinimum  ; init throttle pot minimum to #$0070 (547 mV)
-                std         throttlePotMinCopy  
+                std         throttlePotMinCopy
                 ldd         #$8000              ; Note:
                 std         longLambdaTrimR     ; Two of these 4 values are long term trim and the other two are
                 std         longLambdaTrimL     ; related. They are similar in that $8000 is the initial neutral
@@ -218,7 +218,7 @@ reset           sei                             ; Set interrupt mask
                 stab        iacvObsolete        ; this value is added to 'iacvEctValue' but it's always zero anyway
                 ldaa        $C242               ; data value is $6C (108 dec)
                 staa        stprMtrSavedValue   ; init stprMtrSavedValue to $6C
-                
+
 ;----------------------------
 ; Check for locked fuel map
 ;----------------------------
@@ -250,7 +250,7 @@ reset           sei                             ; Set interrupt mask
                 ldaa        faultBits_4E
                 oraa        #$80                    ; <-- Set Fault Code 03 (bad battery backed checksum)
                 staa        faultBits_4E
-                                                
+
 ;----------------------------
 ; Display stored fault                              ; branches here if battery backed RAM is good
 ;----------------------------
@@ -262,7 +262,7 @@ reset           sei                             ; Set interrupt mask
                 ldaa        faultBits_4E
                 anda        #$3F                    ; clr fault codes 02 and 03 (data corrupt / RAM fail)
                 staa        faultBits_4E
-                
+
 ;----------------------------
 ; Init some hardware regs
 ;----------------------------
@@ -272,7 +272,7 @@ reset           sei                             ; Set interrupt mask
                 staa        port2ddr                ; set port 2 data dir (again)
                 ldaa        timerStsReg             ;
                 ldd         icrHigh                 ; clears something?
-                
+
 ;----------------------------
 ; Copy RAM to ext. mirror
 ;----------------------------
@@ -284,7 +284,7 @@ reset           sei                             ; Set interrupt mask
                 staa        $00,x
                 cpx         #(externalRAMCopy + sizeOfRAMBackup)
                 bne         .copyToExternal
-                
+
 ;----------------------------
 ; Init stack and enter loop
 ;----------------------------
@@ -311,7 +311,7 @@ reInitVars      ldaa        #$FF                ; init engine PW values to $FFFF
                                                 ; set X0085.0 (1 = RPM < 505 or 375 for CWC)
                 ldd         #$00C0              ; 192 decimal (double inj rate for 192 sparks)
                 std         doubleInjecterRate  ; note that this does not need to be 2-bytes
-                clra                            
+                clra
                 tab
                 std         engineRPM           ; set engineRPM to zero
                 staa        iacvValue2          ; clear stepper motor variable
@@ -337,7 +337,7 @@ reInitVars      ldaa        #$FF                ; init engine PW values to $FFFF
                 ldaa        #$01
                 staa        $2045               ; X2045 is unused
                 ldaa        bits_2038
-                anda        #$7F                ; clr bits_2038.7 (also unused) 
+                anda        #$7F                ; clr bits_2038.7 (also unused)
                 staa        bits_2038
                 ldaa        $008B
                 anda        #$DF                ; clr X008B.5 (throttle closing bit)
@@ -353,5 +353,5 @@ reInitVars      ldaa        #$FF                ; init engine PW values to $FFFF
                 clr         iciStartupCounter     ; used at start of ICI
                 rts
 ;------------------------------------------------------------------------------
-                
+
 code

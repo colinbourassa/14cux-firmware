@@ -31,7 +31,7 @@
 ;    however the MIL will illuminate.
 ;
 ;   Note about sensor limits.
-;   When checking the range of the EFT counts, the addition of $04 
+;   When checking the range of the EFT counts, the addition of $04
 ;   checks for exceeded limits at both ends of the sensor. For example,
 ;   adding $04 and checking for a minimum of $08 checks for a low count
 ;   minimum of $04 but it also checks for a high count maximum of $FC which
@@ -68,13 +68,13 @@ adcRoutine11    staa        fuelTempCount       ; EFT sensor count
 .LD468          ldaa        $008A
                 bita        #$02                ; test X008A.1
                 bne         .LD467              ; return if bit is 1
-                
+
                 bitb        #$20                ; test X0085.5
                 beq         .LD467              ; rtn if bit is zero
-                
+
                 ldaa        fuelTempCounter     ; a local down-counter
                 beq         .LD47A              ; branch ahead if down-counter is zero
-                
+
                 dec         fuelTempCounter     ; else decrement it and return
                 rts
 ;-----------------------------------------------------------
@@ -92,8 +92,8 @@ adcRoutine11    staa        fuelTempCount       ; EFT sensor count
                 mul                             ; 48 * temp_delta
                 std         hotFuelAdjustmment  ; store the 16-bit result
                 subd        $C0B2               ; for R3526, value is $0780 (1920 dec)
-                bcs         .LD498              ; branch if calculated value < $0780 
-                
+                bcs         .LD498              ; branch if calculated value < $0780
+
                 ldd         $C0B2               ; else store $0780 (this sets a limit)
                 std         hotFuelAdjustmment  ;
 

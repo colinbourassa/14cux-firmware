@@ -13,7 +13,7 @@ LF018           sei
                 beq         .LF04B              ; return if both bits are zero
                 ldx         $0094               ; X0094/95 looks like a small signed number
                 bmi         .LF026              ; (ldx affects negative flag, this is the only way to F026)
-                
+
                 dex                             ; if it's not negative, decrement it, store it and rtn
                 bra         .LF049
                                                 ; if here, X0094.7 is set

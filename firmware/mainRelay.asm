@@ -32,7 +32,7 @@ adcRoutine8     psha                            ; push ADC value
                 ldab        $008B               ; X008B.6 is set when voltage is OK
                 cmpa        #$8F                ; low voltage threshold
                 bcs         .lowVoltage         ; branch to clr bit if below thrshold
-                
+
                 orab        #$40                ; set X008B.6 (Voltage OK)
                 bra         .calcVoltageAdj
 
@@ -55,11 +55,11 @@ adcRoutine8     psha                            ; push ADC value
                 ldaa        $008A
                 bita        #$40                ; test X008A.6 (0 = startup timeout)
                 bne         .LD0FF              ; branch ahead if bit is high
-                
+
                 ldaa        $00CA               ; reload A
                 subd        mainVoltageAdj      ; subtract voltage ajustment
                 bcs         .decVoltageAdj      ; branch if A is less
-                
+
                 ldd         mainVoltageAdj
                 addd        #$0001              ; increment main voltage adjustment value
                 bra         .storeReturn

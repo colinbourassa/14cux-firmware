@@ -45,7 +45,7 @@ LD609           ldab        coolantTempCount    ; load ECT sensor counts
                 subb        #$27                ; compare with $27
                 bcc         .LD610              ; branch ahead if ECT >= $27 (cooler than)
                 clrb                            ; return 0-0 (when ECT is hotter than $27)
-                
+
                                                 ; <-- cooler than $27
 .LD610          clra                            ; clear A
                 asld                            ; return (2 * (ECT - $27))
@@ -54,11 +54,11 @@ LD609           ldab        coolantTempCount    ; load ECT sensor counts
 ;
 ;                   This is an idle control subroutine
 ;
-;	This routine is called from 2 places:
-;		1) Main loop when mux list ends
-;		2) New AMR code (every 80th time thru)
+; This routine is called from 2 places:
+;   1) Main loop when mux list ends
+;   2) New AMR code (every 80th time thru)
 ;
-;	The interrupt mask is set before calling this and cleared after.
+; The interrupt mask is set before calling this and cleared after.
 ;
 ;------------------------------------------------------------------------------
 
@@ -93,9 +93,9 @@ idleControl     ldd         baseIdleSetting
 
                 ldab        $C158               ; only referenced here, value is $05
                 stab        $00C9               ; see D717
-;-----------------------------------------------------------	
+;-----------------------------------------------------------
 ; Compare target idle against actual engine RPM
-;-----------------------------------------------------------	                                                ; *** start new code
+;----------------------------------------------------------- ; *** start new code
                 ldaa        bits_2059
                 bita        #$10                ; test bits_2059.4 (stepper motor or idle related)
                 beq         .LD657              ; branch ahead if bit is low
@@ -106,12 +106,12 @@ idleControl     ldd         baseIdleSetting
                 subd        $C7D8               ; value is 100 decimal (subtract additional 100 from result)
                 bcs         .LD657              ; branch ahead if eng speed is LT target by less than 100
                 clr         idleSpeedDelta      ; clr idle speed delta if GT 100 RPM??
-;-----------------------------------------------------------	
+;-----------------------------------------------------------
 ; This is the calculation of 'iacvEctValue'. This is a
 ; coolant temperature based value that has something to do
 ; with idle control. This code is similar to the separate
 ; subroutine that was added later at XF9A1.
-;-----------------------------------------------------------	
+;-----------------------------------------------------------
 .LD657          ldx         #$C17B              ; coolant temperature table
                 ldaa        coolantTempCount
                 ldab        #$09                ; data table length is 9
@@ -134,9 +134,9 @@ idleControl     ldd         baseIdleSetting
 
 .LD675          tab
                 stab        iacvEctValue        ; store calculated coolant temp related value
-;-----------------------------------------------------------	
+;-----------------------------------------------------------
 ; Check some things to see if idle control is needed.
-;-----------------------------------------------------------	
+;-----------------------------------------------------------
                 ldaa        $0085               ; bits value
                 bita        #$04                ; test 0085.2 (set and tested in IS routine)
                 bne         .LD690              ; rtn if 0085.2 is set
@@ -171,12 +171,12 @@ idleControl     ldd         baseIdleSetting
                 cmpb        #$4D                ; cmpr with $4D
                 bcs         .LD6B9              ; rtn if neutral switch is LT $4D (in drive for RR)
                 cmpb        #$B3                ; cmpr with $B3
-                
+
 IF BUILD_R3360_AND_LATER
                 bcc         .LD6B9              ; rtn if neutral switch is GT $B3 (in park for RR)
 ELSE
                 bcc         .LD6B9A             ; rtn if neutral switch is GT $B3 (in park for RR)
-ENDC                
+ENDC
                 ldab        bits_2004
                 orab        #$02                ; set 2004.1 when middle voltage at neutral switch (manual tranny?)
                 stab        bits_2004
@@ -184,11 +184,11 @@ ENDC
 IF BUILD_R3360_AND_LATER
 .LD6B9          rts
 ELSE
-.LD6B9		    ldaa	    bits_201F
-		        anda	    #$DF                ; clear bits_201F.5
-		        staa	    bits_201F
-		        
-.LD6B9A         rts		        
+.LD6B9          ldaa        bits_201F
+                anda        #$DF                ; clear bits_201F.5
+                staa        bits_201F
+
+.LD6B9A         rts
 ENDC
 
 ;------------------------------------------------------------------------------
@@ -451,12 +451,12 @@ ENDC
                 bcc         .LD88E              ; if RPM is LT target, branch down to other section
                 ldaa        iacvValue2          ; zero for D90, for RR: zero with 4s and 10s
                 beq         .LD866              ; if iacvValue2 is zero, branch ahead
-                
+
                 ldaa        $C161               ; value is 0A
                 suba        $C164               ; value is 06
                 staa        iacvValue2          ; this is where the 4 comes from
                 jsr         LEE12               ; deals with iacvValue2 and iacMotorStepCount
-                clr         iacvValue2          ; 
+                clr         iacvValue2          ;
                 ldaa        $C164               ; value is 06
                 staa        iacvValue0          ; occasionally init to 6 and decremented to zero        ;
                 ldab        $C165               ; value is $14
@@ -510,7 +510,7 @@ ENDC
                 staa        bits_2047
 
 ;-----------------------------------------------------------
-;		Calculate 16-bit 'mafVariable'
+; Calculate 16-bit 'mafVariable'
 ;
 ; (same as code near CC8A)
 ; this code executes once every time bits_2047.0 is set and
@@ -526,7 +526,7 @@ ENDC
                 ldab        $C25C               ; value is 08
                 mul
                 std         $00C8
-IF BUILD_R3360_AND_LATER                
+IF BUILD_R3360_AND_LATER
                 subd        #$05AB
                 bcs         .LD8CE
                 ldd         #$05AB
@@ -534,7 +534,7 @@ ELSE
                 subd        #$0640
                 bcs         .LD8CE
                 ldd         #$0640
-ENDC                
+ENDC
                 std         $00C8
 
 .LD8CE          ldd         mafLinear
@@ -550,7 +550,7 @@ ENDC
                 ldab        $C25C               ; value is 08
                 mul
                 std         $00C8
-IF BUILD_R3360_AND_LATER                
+IF BUILD_R3360_AND_LATER
                 subd        #$05AB
                 bcs         .LD8EF
                 ldd         #$05AB
@@ -558,7 +558,7 @@ ELSE
                 subd        #$0640
                 bcs         .LD8EF
                 ldd         #$0640
-ENDC                
+ENDC
                 std         $00C8
 
 .LD8EF          ldd         mafLinear
@@ -831,7 +831,7 @@ driveIacMotor   tpa                             ; xfer CCR to A
 ;   Note:   This area presented a problem during original disassembly and the
 ;           code can only be recreated by defining bytes.
 ;------------------------------------------------------------------------------
-                
+
 ;-------------------------------------
 ;    When 'iacvWorkingValue' is Positive
 ;-------------------------------------

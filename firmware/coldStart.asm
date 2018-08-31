@@ -53,7 +53,7 @@ LF04D           ldaa        timerStsReg
 ;-------------------------------
                 bita        #$20                ; test Output Compare Flag 3
                 beq         .LF0A0              ; return if low (injector still closed)
-                
+
                 ldd         #$04FB              ; load two 8-bit mask values (bit 2)
                 bra         .LF064              ; branch to common bank code
 ;-------------------------------
@@ -82,7 +82,7 @@ LF04D           ldaa        timerStsReg
                 lsrb                            ; A= timerCntrlReg1, B= injectorPulseCntr, 00C8/C9= $04FB
                                                 ; test cntr lsb here (clr 1st time)
                 bcc         .LF07B              ; branch ahead if the lsb was zero
-                
+
                 oraa        $00C8               ; set OLVL3 (P12 = even injector bank) (injector off??)
                 bra         .LF07D
 
@@ -138,6 +138,6 @@ LF04D           ldaa        timerStsReg
                 jsr         LF0D5               ; update timers (returns 16-bit counter in A-B)
                 addd        #$0096
                 bra         .LF0B2              ; *** End Loop ***
-                
+
                 rts                             ; unused rts
 code

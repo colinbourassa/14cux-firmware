@@ -33,7 +33,7 @@ NEW_STYLE_MIL_CODE      = 1
 
 ;----------------------------------------------------------
 ; This section recreates the data at the end of the ROM
-; (just before the vectors). The only thing here that 
+; (just before the vectors). The only thing here that
 ; affects the code is the checksum fixer.
 ;----------------------------------------------------------
 CRC16                   = $2FE2     ; addr FFE0/E1
@@ -77,7 +77,7 @@ SIM_CONTROL_BYTE    EQU  $55
 
 ;----------------------------------------------------------
 ; These values can differ from one tune version to the
-; next, so they are defined here. 
+; next, so they are defined here.
 ;----------------------------------------------------------
 
 initialRpmLimit   = $056C   ; used in reset.asm (5403 RPM)
@@ -301,7 +301,7 @@ accelPumpTable  DB          $00,$14,$28,$32,$3F,$52,$66,$7E,$94,$AC,$C3,$D0 ; XC
 
 LC22F           DB          $01
                 DB          $02
-                
+
 hiRPMAdcMux     DB          $87,$02,$87,$86,$87,$02,$87
                 DB          $87,$87,$87,$87,$87,$87,$F7
 

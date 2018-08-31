@@ -104,11 +104,11 @@ i2c             sei                             ; set interrupt mask
                 ldaa        i2cPort
                 oraa        #$40                ; 4004.6 high (what is this??)
                 staa        i2cPort
-                
+
                 ldaa        $00C8               ; load counter
                 inca                            ; increment counter
                 staa        $00C8               ; store counter
-                
+
                 cmpa        #$09
                 beq         .i2cAckClk          ; clk ack after 1st byte
                 cmpa        #$11
@@ -129,7 +129,7 @@ i2c             sei                             ; set interrupt mask
                 rol         $00CA
                 rol         $00C9
                 bcs         .LF2E0              ; bit to xmt is in carry
-                
+
                 ldaa        i2cPort             ; xmt a zero
                 anda        #$DF                ; 4004.5 low
                 staa        i2cPort

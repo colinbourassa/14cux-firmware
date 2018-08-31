@@ -17,7 +17,7 @@ code
 LF416           ldaa        $00E2               ; load bits value
                 bita        #$22                ; test X00E2.5 and X00E2.1
                 beq         .LF422              ; return if both bits are low
-                
+
                 oraa        #$01                ; set X00E2.0
                 anda        #$CD                ; clr X00E2.5, X00E2.4 and X00E2.1
                 staa        $00E2               ; store bits value
@@ -37,13 +37,13 @@ LF423           ldd         throttlePot         ; 10-bit value
                 ldx         ignPeriod           ; load ignition period into X
                 cpx         $C0A7               ; (X - M) data value is $089D (3400 RPM)
                 bcc         .LF44B              ; branch ahead if engine speed < 3400 RPM
-                
+
 ;-------------------------------
 ; RPM > 3400
 ;-------------------------------
                 oraa        #$20                ; set X0087.5 (when eng speed is > 3400 RPM)
                 bra         .LF44D
-                
+
 ;-------------------------------
 ; Code branches here from below
 ; when throttle < about 91%
@@ -66,7 +66,7 @@ LF423           ldd         throttlePot         ; 10-bit value
                 stab        bits_008C
                 clra                            ; clr A to store in tpMinCounter
                 bra         .LF4A7
-                
+
 ;-------------------------------
 ; RPM < 3400
 ;-------------------------------
@@ -79,7 +79,7 @@ LF423           ldd         throttlePot         ; 10-bit value
 .LF44D          staa        $0087               ; store value after X0087.5 set or cleared
                 cpx         #$1770              ; compare eng speed with 1250 RPM
                 bcc         .LF45A              ; branch ahead if eng speed is < 1250 RPM
-                
+
                 ldaa        $0088               ; if here, RPM > 1250
                 oraa        #$10                ; set X0088.4 when RPM > 1250 (purge valve related?)
                 staa        $0088
@@ -96,7 +96,7 @@ LF423           ldd         throttlePot         ; 10-bit value
 
                 cpx         #$0FF0              ; cmpr ignition period with $0FF0 (1838 RPM)
                 bcc         .LF442              ; branch up if RPM < 1838 RPM
-                
+
 ;-------------------------------
 ; If here:
 ;   TPS > 91%
@@ -118,7 +118,7 @@ LF423           ldd         throttlePot         ; 10-bit value
                 mul
                 cmpa        #$00
                 bne         .LF489
-                
+
                 tba                             ; xfr B to A
                 cmpa        $2010               ; value at 2010 is 51h (81 dec)
                 bcs         .LF48C              ; if LT 81, load 81
@@ -130,15 +130,15 @@ LF423           ldd         throttlePot         ; 10-bit value
                 orab        #$08                ; set bits_008C.3 (when set, open loop is forced)
                 stab        bits_008C
                 ldab        faultBits_4C
-                bitb        #$40                ; test VSS fault bit (road speed)                
+                bitb        #$40                ; test VSS fault bit (road speed)
                 beq         .LF4A7              ; branch ahead if no fault
-                
+
                 ldab        roadSpeed           ; load road speed
                 bne         .LF4A7              ; branch ahead if road speed not zero
 
                 ldab        fuelMapNumber       ; road speed is zero, load fuel map number
                 beq         .LF4A6              ; branch ahead if fuel map zero
-                
+
                 cmpb        #$05                ; compare with 5
                 bne         .LF4A7              ; branch ahead if NOT fuel map 5
 
@@ -151,7 +151,7 @@ LF423           ldd         throttlePot         ; 10-bit value
 .LF4A9          ldd         throttlePot
                 subd        #$007C              ; subtract $7C (about 12%)
                 bcs         .LF4C0              ; return if TPS < 12%
-                
+
                 ldaa        $0086
                 anda        #$7E                ; clr X0086.7 and X0086.0
                 oraa        #$04                ; set X0086.2
@@ -189,7 +189,7 @@ LF4C1           ldab        bits_0089           ; load bits value
                 ldab        lambdaReading       ; latest O2 reading
                 cmpb        #$0F                ; compare with 15
                 bcc         .LF4DA              ; rtn if O2 reading > 15 (rich condition)
-                
+
                 ldaa        bits_2004           ; load bits value
                 tst         $0088               ; test bank indicator bit X0088.7
                 bmi         .LF4FB              ; branch if right bank
@@ -203,7 +203,7 @@ LF4C1           ldab        bits_0089           ; load bits value
 ;------------------
 .LF4DB          ldx         $2015               ; normally cycles from 200 to 0
                 dex                             ; decrement X2015/16 (range 0 to 200)
-                stx         $2015               ; 
+                stx         $2015               ;
                 bne         .LF525              ; branch ahead if 2015/16 is not zero (most times)
                                                 ;  (this code executes every 200th time)
                 ldx         $C1FC               ; val is $00C8 (200 dec)
@@ -211,21 +211,21 @@ LF4C1           ldab        bits_0089           ; load bits value
                 bita        #$20                ; test bits_2004.5
                 bne         .LF550              ; if bit 5 is 1, branch ahead to left bank code
                 oraa        #$20                ; set bit 5 and continue
-                staa        bits_2004           ; 
-                ldaa        $2018               ; 
-                staa        $201A               ; 
+                staa        bits_2004           ;
+                ldaa        $2018               ;
+                staa        $201A               ;
                 bra         .LF562              ; branch down to reset X2018 to minus 1 and return
 ;------------------------------------------------
 ; Right Bank
 ;------------------------------------------------
 .LF4FB          bita        #$04                ; test bits_2004.2
                 bne         .LF500              ; branch to continue if set
-                
+
                 rts                             ; bits_2004.2 is zero, so return
 ;------------------
 .LF500          ldx         $2013               ; normally cycles from 200 to 0
                 dex                             ; decrement X2013/14 (range 0 to 200)
-                stx         $2013               ; 
+                stx         $2013               ;
                 bne         .LF520              ; branch ahead if 2013/14 is not zero (most times)
                                                 ;  (this code executes every 200th time)
                 ldx         $C1FC               ; val is $00C8 (200 dec)
@@ -233,14 +233,14 @@ LF4C1           ldab        bits_0089           ; load bits value
                 bita        #$10                ; test bits_2004.4
                 bne         .LF538              ; if bit 4 is 1, branch ahead to right bank code
                 oraa        #$10                ; set bit 4 and continue
-                staa        bits_2004           ; 
-                ldaa        $2017               ; 
-                staa        $2019               ; 
+                staa        bits_2004           ;
+                ldaa        $2017               ;
+                staa        $2019               ;
                 bra         .LF54A              ; branch down to reset X2017 to minus 1 and return
 
 
-.LF520          ldaa        $2017               ; 
-                bra         .LF528              ; 
+.LF520          ldaa        $2017               ;
+                bra         .LF528              ;
 
 .LF525          ldaa        $2018               ;
 
@@ -259,37 +259,37 @@ LF4C1           ldab        bits_0089           ; load bits value
 ;------------------------------------------------
 ; Right Bank
 ;------------------------------------------------
-.LF538          clra                            ; 
+.LF538          clra                            ;
                 ldab        $2017               ; varies from -1 to small positive (single digit)
                 subb        $2019               ; (stayed zero for RTs)
-                bcs         .LF547              ; 
+                bcs         .LF547              ;
                 cmpb        $C1FA               ; val is $02
                 bcs         .LF547              ; (always branched for RTs?)
-                tba                             ; 
+                tba                             ;
 
 .LF547          staa        $201B               ; 201B is used to bias O2 ref (201B stayed zero for both RTs)
 
 .LF54A          ldaa        #$FF                ; reset X2017 to -1
-                staa        $2017               ; 
-                rts                             ; 
-                
+                staa        $2017               ;
+                rts                             ;
+
 ;------------------------------------------------
 ; Left Bank
 ;------------------------------------------------
-.LF550          clra                            ; 
+.LF550          clra                            ;
                 ldab        $2018               ; varies from -1 to small positive (single digit)
                 subb        $201A               ; (stayed zero for RTs)
-                bcs         .LF55F              ; 
+                bcs         .LF55F              ;
                 cmpb        $C1FA               ; val is $02
                 bcs         .LF55F              ; (always branched for RTs?)
-                tba                             ; 
+                tba                             ;
 
 .LF55F          staa        $201C               ; 201C is used to bias O2 ref (201C stayed zero for both RTs)
 
 .LF562          ldaa        #$FF                ; reset X2018 to -1
-                staa        $2018               ; 
-                rts                             ; 
-                
+                staa        $2018               ;
+                rts                             ;
+
 ;------------------------------------------------------------------------------
 ;                   Restore Battery Backed Values
 ;

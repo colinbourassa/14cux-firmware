@@ -16,7 +16,7 @@
 ;   the software resets the stack pointer, and starts fresh at the iciReentry
 ;   address below. This was probably done for "robustness" since a corrupted
 ;   stack or stack pointer would really fuck things up.
-;   
+;
 ;   Main Loop
 ;       The main loop increments through the ADC control table, making one
 ;   measurement for every pass through the loop. The ADC control values in the
@@ -28,7 +28,7 @@
 ;   takes a different path and the ADC table pointer pointer is reset for the
 ;   next pass.
 ;
-;   
+;
 ;   Note that there is a switch controlled call to a 'simulator' routine.
 ;   This should be left OFF.
 ;
@@ -57,7 +57,7 @@ preMainLoop     lds         #$00FF              ; init stack ptr to $00FF
 
 ;---------------------------------------
 ;   Service fault slowdown counter
-; 
+;
 ; Note that X00D0 and X00D1 were used
 ; as 2 separate 8-bit values in older
 ; code, but are used as a 16-bit value
@@ -69,31 +69,31 @@ IF NEW_STYLE_FAULT_DELAY
                 ldx         faultSlowDownCount  ; load 16-bit value into X
                 cpx         $00D0               ; compare it with X00D0 (init to 65250)
                 bne         .LCA60              ; branch ahead if not equal
-                
-                ldx         #$FEE2              ; load $FEE2 
+
+                ldx         #$FEE2              ; load $FEE2
                 stx         faultSlowDownCount  ; reset 16-bit counter to 65250
 .LCA60          stx         $00D0               ; store it here too
 
 ELSE
-			    ldaa	    $00D1		        ; older version
-			    cmpa	    $00D0
-			    bne	        .LCA5D
-			    
-			    ldaa	    #$E0
-			    staa	    $00D1
-.LCA5D          staa	    $00D0
-			    
+                ldaa        $00D1                ; older version
+                cmpa        $00D0
+                bne         .LCA5D
+
+                ldaa        #$E0
+                staa        $00D1
+.LCA5D          staa        $00D0
+
 ENDC
 
 ;---------------------------------------
 ;              Service MIL
 ;
 ; If data value at XC7C2 is zero, turn
-; MIL off and branch to next section. 
+; MIL off and branch to next section.
 ; For NAS, value is $FF.
 ;---------------------------------------
                 ldaa        $C7C2               ; value will be $FF or $00 (MIL delay)
-                bne         .LCA6F              ; branch if not zero 
+                bne         .LCA6F              ; branch if not zero
 
                 ldaa        port1data
                 oraa        #$01                ; EFI warning light OFF
@@ -112,7 +112,7 @@ IF NEW_STYLE_FAULT_SCAN
 
 .LCA6F          ldd         milTestDelay        ; zeroed at startup, 16-bit EFI light (MIL) delay
                 bne         .LCA7C              ; branch if not zero
-                
+
                 addd        #$0001              ; add 1 to delay counter
                 std         milTestDelay        ; store it
                 bra         .checkFaultBits     ; branch to check for faults
@@ -167,26 +167,26 @@ ENDC
 ; End new style fault scan
 ;----------------------------
 ELSE
- 
+
 ;---------------------------------------------------------------------------
 ; This is the way the fault checking is done in older code (including TVR).
 ; This method is not as good since unused bits can get through the mask
 ; and set the MIL.
 ;---------------------------------------------------------------------------
-	                                            ; scan for set fault bits
-.LCA6F		    ldaa	    faultBits_4D               
-		        anda	    #$EF                ; mask out bit 4 (DTC 59 -- Group Fault)
-		        oraa	    faultBits_4B        ; OR in all bits from faultBits_4B
-		        oraa	    faultBits_4C        ; OR in all bits from faultBits_4C
-		        anda	    #$F0                ; low nibble unused for all three
-		        oraa	    faultBits_49        ; OR in all bits from faultBits_49
-		        oraa	    faultBits_4A        ; OR in all bits from faultBits_4A
-		        beq	        Write9x00           ; if zero, no faults, branch ahead
-		        
-		        ldaa	    port1data
-		        anda	    #$FE                ; EFI warning light ON
-		        staa	    port1data
-ENDC                
+                                             ; scan for set fault bits
+.LCA6F        ldaa       faultBits_4D
+              anda       #$EF                ; mask out bit 4 (DTC 59 -- Group Fault)
+              oraa       faultBits_4B        ; OR in all bits from faultBits_4B
+              oraa       faultBits_4C        ; OR in all bits from faultBits_4C
+              anda       #$F0                ; low nibble unused for all three
+              oraa       faultBits_49        ; OR in all bits from faultBits_49
+              oraa       faultBits_4A        ; OR in all bits from faultBits_4A
+              beq        Write9x00           ; if zero, no faults, branch ahead
+
+              ldaa       port1data
+              anda       #$FE                ; EFI warning light ON
+              staa       port1data
+ENDC
 ;------------------------------------------------------------------------------
 
 
@@ -225,7 +225,7 @@ Write9x00       sei                                 ; [2]
                 staa        $9000                   ; [4]
                 ldx         engDataB                ; [5]
                 ldab        engInitDataB            ; [4]
-                jsr         shiftEngDebugData       ; [6] 
+                jsr         shiftEngDebugData       ; [6]
                 staa        $9100                   ; [4]
                 ldx         engDataC                ; [5]
                 ldab        engInitDataC            ; [4]
@@ -256,7 +256,7 @@ ENDC
 checkForHiSpeed ldaa        ignPeriod           ; load MSB of ignition period
                 cmpa        #ignPeriodHiSpeed   ; compare MSB of period with $07 ($0700 = 4185 RPM)
                 bcc         normalSpeed         ; branch ahead if RPM < 4185
-                
+
                 ldd         throttlePot             ; if here RPM > 4185, load 10-bit Throttle Pot
                 subd        wideThrottleThreshold   ; subtract $02CD (70% throttle)
                 bcs         normalSpeed             ; branch ahead if TPS < 70%
@@ -271,10 +271,10 @@ checkForHiSpeed ldaa        ignPeriod           ; load MSB of ignition period
                 bra         startAdcReads
 
 normalSpeed     ldaa        specialAdcControl   ; branches here if no need for hi-speed ADC mux table
-                beq         useNormalAdcMux         ; if counter is zero, it's time to switch back to normal
-                deca                                ; else, just decrement the delay counter
+                beq         useNormalAdcMux     ; if counter is zero, it's time to switch back to normal
+                deca                            ; else, just decrement the delay counter
                 staa        specialAdcControl   ; and store it
-                ldx         #hiRpmAdcMux            ; load address of high-speed table
+                ldx         #hiRpmAdcMux        ; load address of high-speed table
                 bra         startAdcReads
 
 useNormalAdcMux ldaa        bits_201F           ; if here, we are using the normal ADC table
@@ -309,12 +309,12 @@ LCB2A           ldx         adcMuxTablePtr      ; load ADC table working (increm
 IF BUILD_R3365
                 bne         .LCB35              ; branch ahead if bits are not zeros (end of list)
                 jmp         .LCBC4A             ; not end of list, so jump ahead
-ELSE                
-IF BUILD_R3360_AND_LATER                
+ELSE
+IF BUILD_R3360_AND_LATER
                 bne         .LCB35              ; branch ahead if bits are not zeros (end of list)
                 jmp         .LCBC4              ; not end of list, so jump ahead
 ELSE
-                beq		    .LCBC4              ; older code, branch ahead if not end-of-list
+                beq         .LCBC4              ; older code, branch ahead if not end-of-list
 ENDC
 ENDC
 
@@ -324,7 +324,7 @@ ENDC
 .LCB35          ldaa        $0085
                 anda        #$EF                ; clear X0085.4 (low indicates end of list)
                 staa        $0085
-                pshb                            ; push B to stack (ADC control value)                
+                pshb                            ; push B to stack (ADC control value)
 ;-----------------------------------------------------------
 ; A/C service (executes when RPM < 1627)
 
@@ -332,15 +332,15 @@ ENDC
 ;-----------------------------------------------------------
                 tst         $00E2               ; test X00E2.7
                 bmi         .LCB5A              ; branch to skip A/C if set (RPM > 1627)
-                
+
                                                 ; if here, RPM < 1627
                 ldaa        acDownCounter       ; down-counter set to 44 dec in A/C routine
                 beq         .LCB4A              ; branch to continue A/C routine if zero
-                
+
                 deca                            ; otherwise, decrement the down-counter
                 staa        acDownCounter       ; store it
                 bra         .LCB5A              ; and branch to next section
-                                                
+
 .LCB4A          ldaa        port2data           ; counter reached zero
                 ldab        $008A
                 bitb        #$08                ; test X008A.3 (A/C  1= OFF, 0 = ON)
@@ -362,18 +362,18 @@ ENDC
 ;-----------------------------------------------------------
 .LCB5A          ldaa        $0086               ; X0086.3 indicates memory test complete
                 bita        #$08                ; test X0086.3
-                
-          
+
+
 IF BUILD_R3383
                 bne         .LCBAF              ; branch to next section, if complete
-ELSE          
-                
-IF BUILD_R3360_AND_LATER                
+ELSE
+
+IF BUILD_R3360_AND_LATER
                 bne         .romTestDone        ; branch to next section, if complete
 ELSE
                 bne         .LCBAF              ; branch to next section, if complete
 ENDC
-ENDC           
+ENDC
 
                 clrb                            ; start test by clearing sum location B
                 ldx         #romStart           ; romStart = $C000
@@ -382,12 +382,12 @@ ENDC
                 jsr         keepAlive           ;                   toggle the stay-alive timer
                 inx                             ;                   increment the index register
                 bne         .calcROMChksum      ; * Loop End *      repeat until address $FFFF
-                
+
                 stab        romChecksum         ; store the checksum
                 cmpb        #$01                ; compare it with $01
                 beq         .romChksumGood      ; branch if equal
-                
-                ldaa        faultBits_49 
+
+                ldaa        faultBits_49
                 oraa        #$01                ; set fault code 29 (ROM checksum fail)
                 staa        faultBits_49
                 staa        romChecksumMirror
@@ -395,28 +395,28 @@ ENDC
 .romChksumGood  ldaa        $0086
                 oraa        #$08                ; set X0086.3 high (memory test complete)
                 staa        $0086
-                
+
 ;-----------------------------------------------------------
-;               EFI (MIL) Warning Light 
+;               EFI (MIL) Warning Light
 ;
 ; This section is not in Griffith Code (possibly NAS only)
 ;
-;-----------------------------------------------------------                
+;-----------------------------------------------------------
 
 IF NEW_STYLE_MIL_CODE
                                                 ; this code may be startup flash of warning light
 .romTestDone    ldaa        $C7C2               ; load XC7C2 again (will be $00 or $FF)
                 beq         .LCBAF              ; branch if zero (usually TVR and non-NAS)
-                
+
                 ldd         milTestDelay        ; delay counter for EFI warning light
                 bita        #$80                ; test milTestDelay bit 15 (possibly set above)
                 bne         .LCBAF              ; branch ahead if it's set
-                
+
                 addd        #$0001              ; otherwise, add 1
                 std         milTestDelay
                 subd        #$02CA              ; this value may act as a time delay
                 bcs         .LCBA9              ; branch while milTestDelay is less than this
-                
+
                 ldaa        milTestDelay
                 oraa        #$80                ; set milTestDelay bit 15
                 staa        milTestDelay
@@ -437,7 +437,7 @@ ENDC
                 dec         fuelPumpTimer       ; decrement the fuel pump shut-off counter
                 bne         .LCBC0              ; turn off fuel pump when counter reaches zero
 
-                                                ; the A register was disturbed by the idleControl             
+                                                ; the A register was disturbed by the idleControl
                 oraa        #$40                ;  subroutine, so this looks like a code bug
                 staa        port1data           ; Port 1.6 high (fuelPumpTimer is zero, fuel pump OFF)
 
@@ -454,42 +454,42 @@ IF BUILD_R3365                                  ; code above branches here if AD
 .LCBC4A         pshb                            ; push ADC control byte to stack
 .LCBC4          tst         $0085               ; test X0085.7 (indicates low or no engine RPM)
                 bpl         .LCBCE              ; branch ahead if 0085.7 is clr (engine running)
-                
+
                 jsr         LF04D               ; cold start injector chattering (below 0 deg F)
 ELSE
 
 .LCBC4          tst         $0085               ; test X0085.7 (indicates low or no engine RPM)
                 bpl         .LCBCE              ; branch ahead if 0085.7 is clr (engine running)
-                
+
                 pshb                            ; push ADC control byte to stack
                 jsr         LF04D               ; cold start injector chattering (below 0 deg F)
                 pulb                            ; pull ADC control byte from stack
-ENDC                
+ENDC
 
 .LCBCE          ldaa        AdcStsDataHigh      ; read the ADC status/dataHigh register
                 bita        #$40                ; test ADC busy flag
                 bne         .LCBC4              ; branch back if busy
-                
+
                 anda        #$03                ; save upper 2 bits of 10 bit data
                 staa        $00C8               ; store it in temporary location
                 staa        adcReadingUnused    ; store it here too but this location unused
                 ldaa        AdcDataLow          ; read low 8 bits
                 staa        $00C9               ; 10-bit ADC value is now at X00C8/C9
-                staa        $00BA               ;                        and 'adcReadingUnused'
-                
+                staa        $00BA               ;  and 'adcReadingUnused'
 
-IF BUILD_R3365                
-		   	    ldaa	    ignPeriod           ; ignition period (MSB only)
-		   	    cmpa	    #$0A
-		   	    bcc	        .LCBF8
-		   	    cmpa	    #$07
-		   	    bcs	        .LCBF8
-		   	    ldaa	    #$27
-		   	    staa	    AdcControlReg1
-		   	    ldaa	    #$C8
-		   	    staa	    AdcDataLow
-		   	    jsr	        LFA46
-.LCBF8	    	pulb
+
+IF BUILD_R3365
+                ldaa        ignPeriod           ; ignition period (MSB only)
+                cmpa        #$0A
+                bcc         .LCBF8
+                cmpa        #$07
+                bcs         .LCBF8
+                ldaa        #$27
+                staa        AdcControlReg1
+                ldaa        #$C8
+                staa        AdcDataLow
+                jsr         LFA46
+.LCBF8          pulb
 
 ENDC
 
@@ -516,28 +516,28 @@ ENDC
                 ldaa        $00C9               ; reload low byte of ADC reading
                 cli                             ; clear interrupt mask
                 ldx         $00,x               ; load service routine address pointer from table
-                
+
                 jsr         $00,x               ; <-- call ADC service routine
 
                 ldaa        bits_2059           ; load bits value
                 bita        #$20                ; test bits_2059.5 (set below or when ICI starts)
                 bne         .LCC1A              ; branch ahead if bit is 1
-                
+
                 bita        #$40                ; test bits_2059.6 (also set when ICI starts)
                 beq         .LCC1A              ; branch ahead if bit is 0
-                
-                ldd         altCounterHigh          ; reading alternate avoids clearing TOF
+
+                ldd         altCounterHigh      ; reading alternate avoids clearing TOF
                 subd        iciStartupValue     ; subtract counter value written in ICI
-                subd        #$4E20                  ; subtract 20000 decimal
-                bcs         .LCC1A                  ; branch if altCounterHigh is less
-                
+                subd        #$4E20              ; subtract 20000 decimal
+                bcs         .LCC1A              ; branch if altCounterHigh is less
+
                 ldaa        bits_2059
                 oraa        #$20                ; set bits_2059.5
                 staa        bits_2059
 
 .LCC1A          jsr         sciService          ; call serial port service routine
                 jsr         LF0D5               ; update timers (also returns 16-bit counter in A-B)
-                
+
 ;-----------------------------------------------------------
 ; This code section re-inititializes the  MPU registers
 ; every 20th time through the code. mpuReInitCounter is used
@@ -546,7 +546,7 @@ ENDC
                 ldaa        mpuReInitCounter    ; counter varies between zero and 20
                 cmpa        #$14                ; compare with 20 decimal
                 beq         .LCC2A              ; branch ahead if equal to 20
-                
+
                 inca                            ; if not, increment it
                 bra         .LCC53              ; and branch ahead to store it
 
@@ -581,20 +581,20 @@ ENDC
 ; comes from the data section at address XC259.
 ;---------------------------------------------------------------------
                 inc         zeroTo80Counter     ; counter increments 0 through 80
-                ldaa        $C259                   ; data value is 80
+                ldaa        $C259               ; data value is 80
                 cmpa        zeroTo80Counter     ; compare counter with 80
-                bcc         .LCC76                  ; branch down near end of loop if counter < 80
-                
+                bcc         .LCC76              ; branch down near end of loop if counter < 80
+
                 clr         zeroTo80Counter     ; counter is 80, so reset it to zero
 
                 ldaa        bits_2047           ; this code executes every 80th time through
                 bita        #$10                ; test Xbits_2047.4 (a coolant temp related bit)
                 beq         .LCC76              ; if zero, branch to skip section
-                
+
                 ldaa        $0087
                 bita        #$04                ; test X0087.2
                 bne         .LCC78              ; if set, branch ahead to skip idleControl and continue
-                
+
                 sei
                 jsr         idleControl         ; IACV related subroutine
                 cli
@@ -606,14 +606,14 @@ ENDC
 ;-----------------------------------------------------------
 .LCC78          jsr         LF5F0               ; this s/r can reset rpmIndicatorDelay to 50, rtns $00 or $FF in A accum
                 beq         .LCCEF              ; branch ahead if $00 was returned
-                
+
                 ldaa        bits_2047           ; bits value
                 bita        #$04                ; test bits_2047.2 (VSS failure bit)
                 bne         .LCCEF              ; branch down if road speed sensor failure
-                
+
                 jsr         LF831               ; IACV (stepper motor) fault test subroutine
                 jsr         LF611               ; 1670 RPM counter subroutine
-                
+
 ;-----------------------------------------------------------
 ;             Calculate 'mafVariable'
 ;
@@ -622,7 +622,7 @@ ENDC
 ; This looks like a fault detection routine for Idle Air
 ; Control Valve (IACV).
 ;-----------------------------------------------------------
-                
+
                 ldaa        bits_2047
                 bita        #$08                ; test bits_2047.3 (1 means RPM > 1670 for a short time)
                 beq         .LCCEF              ; branch down if bit is zero
@@ -633,10 +633,10 @@ ENDC
                 sei                             ; set interrupt mask
                 bita        #$01                ; test bits_2047.0
                 bne         .LCCE5              ; branch ahead if bit is set
-                
+
                 oraa        #$01                ; set bits_2047.0
                 staa        bits_2047           ; store bits_2047
-                
+
                 ldaa        iacvVariable        ; initial (middle) value is 128
                 cmpa        #$80                ; is value > 128
                 bcc         .LCCC6
@@ -648,7 +648,7 @@ ENDC
                 ldab        $C25C               ; this value is in the range of 6 to 8
                 mul                             ; multiply delta by this value
                 std         $00C8               ; store 16-bit result in temporary location
-IF BUILD_R3360_AND_LATER                
+IF BUILD_R3360_AND_LATER
                 subd        #$05AB              ; subtract 1451 decimal
                 bcs         .LCCB7              ; branch down if value was less
                 ldd         #$05AB              ; otherwise, limit the value to 1451 decimal
@@ -656,7 +656,7 @@ ELSE
                 subd        #$0640              ; subtract 1600 decimal
                 bcs         .LCCB7              ; branch down if value was less
                 ldd         #$0640              ; otherwise, limit the value to 1600
-ENDC                
+ENDC
                 std         $00C8               ; store value
 
 .LCCB7          ldd         mafLinear           ; load linearized MAF
@@ -666,7 +666,7 @@ ENDC
 
 .LCCC1          std         mafVariable
                 bra         .LCCE5
-                
+
 ;---------------------------------
 ; iacvVariable is greater than 128
 ;---------------------------------
@@ -674,16 +674,16 @@ ENDC
                 ldab        $C25C               ; this value is in the range of 6 to 8
                 mul                             ; multiply delta by this value
                 std         $00C8               ; store 16-bit result in temporary location
-                
-IF BUILD_R3360_AND_LATER                
+
+IF BUILD_R3360_AND_LATER
                 subd        #$05AB              ; subtract 1451 decimal
-                bcs         .LCCD8              ; branch down if value was less                
+                bcs         .LCCD8              ; branch down if value was less
                 ldd         #$05AB              ; otherwise, limit the value to 1451 decimal
 ELSE                                            ; Older Version:
                 subd        #$0640              ; subtract 1600
                 bcs         .LCCD8              ; branch down if value was less
                 ldd         #$0640              ; otherwise, limit the value to 1600
-ENDC                            
+ENDC
                 std         $00C8               ; store value
 
 .LCCD8          ldd         mafLinear           ; load linearized MAF

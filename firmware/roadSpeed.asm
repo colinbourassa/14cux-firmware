@@ -44,12 +44,12 @@
 ;   incremented at an increasing rate as road speed increases.
 ;       There is a timer related counter (timerOverflow2) that increments
 ;   every time the MPU's free running counter wraps. The road speed routine
-;   uses this to periodically (approx. once per second) copy or latch the 
+;   uses this to periodically (approx. once per second) copy or latch the
 ;   vssStateCounter into the actual road speed variable (roadSpeed). At this
 ;   time, the state counter is reset to zero and the process repeats. Note
 ;   that this means that the road speed is only updated once per second.
 ;
-;   
+;
 ;   There are problems with measuring road speed this way.
 ;
 ;   1)  Strobing effects (aliasing) can happen at certain combinations of
@@ -113,9 +113,9 @@ adcRoutine7     staa        $00C8               ; now both C8 and C9 hold the 8-
                 beq         .roadSpeedOK        ; branch if zero (road speed is LT 119 to 122 MPH)
 IF BUILD_R3365
                 ldab        #$96                ; limit road speed reading to  93 MPH for NAS D90
-ELSE                
+ELSE
                 ldab        #$B0                ; limit road speed reading to 109 MPH for others
-ENDC                
+ENDC
                 bra         .LD38D              ; skip loading transition counter and store value as road speed
 
                                                 ; if here, road speed is LT 122 (or 119?)
@@ -123,13 +123,13 @@ ENDC
 
 .LD38D          stab        roadSpeed           ; store as road speed (or 176 KPH limit)
                 beq         .LD3A5              ; branch if road speed is zero
-                
+
                                                 ; if here, VSS appears to be working (non-zero)
                 inc         $207D               ; X207D looks like a fault delay (slowdown) counter
                 ldab        $C258               ; this value is usually $0A
                 cmpb        $207D               ; compare counter with $0A
                 bcc         .resetCounters      ; branch ahead if counter < $0A
-                
+
                 ldab        $2047               ; else, clear internal fault bit
                 andb        #$FB                ; clr X2047.2 (clear VSS fail bit)
                 stab        $2047
@@ -150,7 +150,7 @@ IF NEW_STYLE_AC_CODE
                 beq         .lessThan13         ;  just decremented here
                 deca                            ; decrement 1 Hz counter but not less than zero
                 staa        startupDownCount1Hz
-ENDC                
+ENDC
 
 ;---------------------------------------------
 ;        *** Condition Idle Bit ***
@@ -162,7 +162,7 @@ ENDC
                 ldab        roadSpeed           ; load road speed
                 cmpb        #$04                ; compare road speed with 4
                 bcc         .roadspeedGT4       ; branch to set X008B.0 if RS > 4
-                
+
                 anda        #$FE                ; clr X008B.0 (road speed < 4)
                 bra         .LD3C9
 
@@ -188,34 +188,34 @@ ENDC
                 addd        mafDirectLo
                 subd        #$04CE              ; this equals an average value of 3.0 volts
                 bcs         .LD41A              ; abort test if airFlow sum avgs 3.0 volts
-                
+
                 ldaa        ignPeriodFiltered   ; load MSB of ignition period
                 cmpa        #dtc68_minimumRPM   ; 2250 RPM for newer code, 2100 RPM for older code
                 bcc         .LD41A              ; abort test if engine speed is lower than this
-                
+
                 cmpa        #$08                ; about 3600 RPM
                 bcs         .LD41A              ; abort test if engine speed is greater than about 3600 RPM
-                
+
                 ldx         rsFaultSlowdown             ; load Road Speed fault delay counter
                 inx                                     ; increment it
                 stx         rsFaultSlowdown             ; store it
-                cpx         rsFaultSlowdownThreshold    ; compare it with XC0CE/CF (usually $0800) 
+                cpx         rsFaultSlowdownThreshold    ; compare it with XC0CE/CF (usually $0800)
                 bcs         .LD41E                      ; branch to skip fault setting if less than this
-                
+
                 ldaa        $0088
                 oraa        #$02                ; set X0088.1 (a Road Speed Sensor Fail bit)
                 staa        $0088
-                
+
                 ldaa        faultBits_4C
                 oraa        #$40                ; set Fault Code 68 (Vehicle Speed Sensor)
                 staa        faultBits_4C
-                
+
                 ldaa        $2047
                 oraa        #$04                ; set X2047.2 (another Road Speed Sensor Fail bit)
                 staa        $2047
-                
+
                 bra         .LD41E              ; end of Road Speed Sensor fault check
-                
+
 ;------------------------------------------------------------------------------
 ;   Road Speed Comparator (Level) Test
 ;
@@ -281,7 +281,7 @@ rdSpdCompTest   ldaa        #$27                ; [2] SC=0 PC=1  Set comparator 
 .lowLevel       ldaa        $008B               ; [3] waveform is low
                 bita        #$80                ; [2] test 008B.7 (test the waveform-high bit)
                 beq         .rsReturn           ; [3] just return if it's clear
-                
+
                 anda        #$7F                ; [2] else, clr 008B.7 and count this transition
                 staa        $008B               ; [3]
                 inc         vssStateCounter     ; [6] (3 of 3) increment X2002 when road speed is not zero
@@ -290,8 +290,8 @@ rdSpdCompTest   ldaa        #$27                ; [2] SC=0 PC=1  Set comparator 
                 bcs         .loadO2AndRet       ; [3] but stop at $FFFF
                 std         faultCode26Counter  ; [5] (value ramps up while vehicle is moving)
 
-												;     note that R2157 code (1990) does not have 'faultCode26Counter'
-												;     nor the loading of 'lambdaReading' before rts
+                                                ; note that R2157 code (1990) does not have 'faultCode26Counter'
+                                                ; nor the loading of 'lambdaReading' before rts
 
 .loadO2AndRet   ldab        lambdaReading       ; [4] load O2 sensor before returning
 

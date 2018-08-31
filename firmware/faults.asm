@@ -36,7 +36,7 @@ faultCodeScan   clrb
 
 IF BUILD_R3360_AND_LATER
                                                     ; this is the later L-R version
-.faultScanLoop      ldx         #faultBits_49       ; 
+.faultScanLoop      ldx         #faultBits_49       ;
                     abx                             ; add B (offset) to X
                     ldaa        $00,x               ; load indexed fault byte
                     ldx         #.faultMasks        ; load address of fault masks
@@ -47,19 +47,19 @@ IF BUILD_R3360_AND_LATER
                     cmpb        #$06                ; compare with 6
                     bne         .faultScanLoop      ; loop back if less than 6
                     bra         .storeFaultRet      ; branch to store zero (no fault)
-                
+
 ELSE
                                                     ; this is the TVR version (before mask values)
-			        ldx	        #$0048       
+                    ldx         #$0048
 .faultScanLoop      inx
-			        ldaa	    $00,x
-	    		    bne	        .foundFaultBit
-		            incb
-			        cmpb	    #$06
-			        bne	        .faultScanLoop
-			        bra	        .storeFaultRet
-ENDC                
-                
+                    ldaa        $00,x
+                    bne         .foundFaultBit
+                    incb
+                    cmpb        #$06
+                    bne         .faultScanLoop
+                    bra         .storeFaultRet
+ENDC
+
 
 .foundFaultBit      pshb                            ; B is index counter (0 thru 5)
                     tab                             ; transfer A to B (fault code)
@@ -75,7 +75,7 @@ ENDC
                     pulb                            ; B is index counter (0 thru 5)
                     ldaa        #$08                ; 8 bits per byte
                     mul                             ; mpy to get to 8-bit segment
-                    addb        tmpFaultCodeStorage ; 
+                    addb        tmpFaultCodeStorage ;
                     ldx         #.faultCodes        ; address of fault code table (below)
                     abx                             ; add B to index
                     ldaa        $00,x               ; get value from table
@@ -121,26 +121,26 @@ ENDC
 
 LF3A3           ldab        $00D3
                 tst         $0088               ; test bank indicator bit
-                bmi         .LF3B5              ; branch ahead if bit is 1 (right bank)                
+                bmi         .LF3B5              ; branch ahead if bit is 1 (right bank)
 ;---------------------------------------
 ; Left Bank
 ;---------------------------------------
-                ldaa        faultBits_49        ; 
+                ldaa        faultBits_49        ;
                 oraa        #$02                ; <-- Set Fault Code 44 (O2 Sensor A Fault, left bank)
-                staa        faultBits_49        ; 
+                staa        faultBits_49        ;
                 orab        #$01                ; set X00D3.0 to indicate Sensor A fault
-                stab        $00D3               ; 
+                stab        $00D3               ;
                 rts
 ;---------------------------------------
 ; Right Bank
 ;---------------------------------------
-.LF3B5          ldaa        faultBits_49        ; 
+.LF3B5          ldaa        faultBits_49        ;
                 oraa        #$04                ; <-- Set Fault Code 45 (O2 Sensor B Fault, right bank)
-                staa        faultBits_49        ; 
+                staa        faultBits_49        ;
                 orab        #$02                ; set X00D3.1 to indicate Sensor B fault
-                stab        $00D3               ; 
+                stab        $00D3               ;
                 rts
-                
+
 ;------------------------------------------------------------------------------
 ; This routine can be called from 2 places in ICI.
 ; It clrs some bank related values.

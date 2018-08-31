@@ -33,7 +33,7 @@
 ;
 ;   2nd byte: nnnn nnnn     this byte becomes bits 13:6 of desired address and
 ;                           must be sent quickly after 1st byte due to timeout
-;                            
+;
 ;                            (address is now MMnn nnnn nnxx xxxx)
 ;
 ;   Read/Write Transaction
@@ -49,7 +49,7 @@
 ;    2nd byte: rrrr rrrr    8-bit data to write (send quickly due to timeout)
 ;
 ;   Quantity examples:
-;    00 = 0000 00xx =   1 
+;    00 = 0000 00xx =   1
 ;    3c = 0011 11xx =  16
 ;    40 = 0100 00xx =  80 bytes (0050 hex)
 ;    44 = 0100 01xx = 100 bytes (0064 hex)

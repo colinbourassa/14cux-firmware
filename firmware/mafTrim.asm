@@ -28,10 +28,10 @@ adcRoutine9     ldd         $00C8               ; load 10-bit value from X00C8/C
                 asld
                 asld                            ; shift MSB into carry
                 bcc         .msbLow             ; return if MSB was low (normal cond.)
-                
+
                 ldd         #$FFFF              ; bad value, store $FFFF instead
 
 .msbLow         std         longLambdaTrimR
-                std         longLambdaTrimL                                
+                std         longLambdaTrimL
                 rts
 code

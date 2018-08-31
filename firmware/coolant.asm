@@ -32,7 +32,7 @@
 ;   A diagnostic trouble code (14) is stored when the signal is out of range
 ;   (0.15V to 4.9V) for longer than 160 milliseconds. The MIL will illuminate
 ;   and the ECM will substitute a default value of 36 degrees C (97 F).
-;       
+;
 ;------------------------------------------------------------------------------
 
 code
@@ -44,10 +44,10 @@ IF BUILD_R3360_AND_LATER
 ELSE
                 addb        #$08                ; add 8           (original value)
                 cmpb        #$10                ; compare with 16 (original value)
-ENDC              
-                
+ENDC
+
                 bhi         .LD116              ; branch ahead if ECT count is OK
-                
+
                 ldaa        $C0CD                   ; for R3526, this value is $70
                 jsr         setTempTPFaults         ; <-- Set Fault Code 14 (eng. coolant temp)
                 ldab        #$14                    ; reset counter to 20 decimal
@@ -55,7 +55,7 @@ ENDC
 
 .LD116          ldab        ectFaultCounter     ; load counter
                 beq         .LD122                  ; branch ahead if counter is zero (ECT sensor is OK)
-                
+
                 decb                            ; X2079 is non-zero so decrement it
                 stab        ectFaultCounter               ; store it
                 ldaa        $C0CD               ; and use default value ($70)
@@ -81,7 +81,7 @@ ENDC
                 ldx         #$C0B5              ; load address of limp home data table
                 ldab        fuelMapNumber       ; load fuel map number
                 beq         .LD13A              ; branch ahead if it's zero
-                
+
                 ldx         fuelMapPtr          ; else, load fuel map base pointer
                 ldab        #$E2                ; load $E2
                 abx                             ; add B to X to create table address
@@ -95,7 +95,7 @@ ENDC
                 asld                            ; mpy by 2
                 adda        $08,x               ; add 2nd row value
                 staa        coolantTempAdjust   ; and store the result
-                
+
 ;----------------------------------------------------------
                                                 ; this is the only call to this subroutine
                 jsr         LF4C1               ; it uses the 'lambdaReading' and adjusts
@@ -117,7 +117,7 @@ ENDC
                 ldaa        port1data           ; load mpu port 1
                 bita        #$40                ; test P1.6 (fuel pump relay)
                 bne         .LD191              ; branch ahead if high (fuel pump OFF)
-                
+
                 ldaa        ignPeriodFiltered   ; load MSB of filtered ignition period
                 cmpa        #ignPeriodEngStart  ; compare with $3A (505 RPM) or $4E (375 RPM) for cold weather chip
                 bcc         .LD16E              ; branch ahead if eng RPM is lower than this
@@ -127,9 +127,9 @@ ENDC
                 stab        $0085
                 clr         ectCounter          ; clear up-counter
                 rts                             ; and return
-                
+
 ;----------------------------------------------------------
-;	This code stops executing once engine starts and RPM
+; This code stops executing once engine starts and RPM
 ;   exceeds 505 (or 375 for CWC)
 ;----------------------------------------------------------
 .LD16E          bitb        #$01                ; test X0085.0
@@ -139,12 +139,12 @@ ENDC
                                                 ; code gets here when eng RPM is LT 505 and 0085.0 is clr
 .LD175          cmpa        #$94                ; compare ignition pulse MSB with $94 (198 RPM)
                 bcs         .LD166              ; branch up RPM > 198 (to clr 0085 bits and return)
-                
+
                 ldaa        ectCounter          ; RPM < 198, load upcounter
                 inc         ectCounter          ; increment the upcounter
                 cmpa        #$FF
                 bcs         .LD18C              ; branch ahead if counter is LT $FF
-                
+
                 ldaa        bits_2047
                 anda        #$DF                ; clr bits_2047.5 (to indicate RPM < 350)
                 staa        bits_2047
@@ -169,18 +169,18 @@ ENDC
 .LD1A2          ldaa        bits_2059
                 bita        #$08                ; test bits_2059.3
                 beq         .LD1F3              ; if zero, branch down to skip stepper motor code
-                
+
                 ldaa        $C17E               ; inside coolant temp table (value is $23 or 87 C)
                 adda        #$05                ; $23 + 5 = $28 (82 degrees C)
                 cmpa        coolantTempCount    ; compare with actual coolant temperature
                 bcc         .LD1F3              ; branch if coolant temp is hotter
-                
+
                 ldaa        bits_2059
                 anda        #$F7                ; clr bits_2059.3
                 staa        bits_2059
                 ldaa        iacPosition         ; stepper motor position (0 = open, 180 = closed)
                 adda        #$14
-                
+
                 sei                             ; set interrupt mask
                 staa        iacMotorStepCount   ; abs value of stepper mtr adjustment
                 ldaa        $008A

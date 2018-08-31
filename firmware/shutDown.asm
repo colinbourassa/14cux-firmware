@@ -10,7 +10,7 @@
 ;   X00C8/C9 (only X00C9 for 8-bit readings). The A accumulator also contains
 ;   the 8-bit reading.
 ;
-;   
+;
 ;   This ADC service routine is for the fuel pump supply voltage through the
 ;   inertia switch. It comes in at Pin 19 of the 40-pin connector. Besides
 ;   being measured by the ADC here, it is also routed through I3 and to the
@@ -53,23 +53,23 @@ code
 adcRoutine0     ldab        $0085               ; load X0085 bits value
                 bitb        #$04                ; test X0085.2 (1 = shutdown sequence has started)
                 bne         .LD053              ; branch ahead if shutdown has already started
-                
+
                 cmpa        #$1F                ; compare measured voltage with $1F
                 bcc         .LCFEA              ; branch ahead if > $1F (normal path)
-                
+
                                                 ; if here, voltage dropped below thrshold
                 ldab        inertiaCounter      ; local counter
                 incb                            ; increment the delay counter
                 cmpb        #$32                ; compare with 50 decimal
                 bcc         .LCFEE              ; if counter = 50, branch to start shutdown
-                
+
                 stab        inertiaCounter      ; count < 50, so just store it
                 rts                             ;  and return
 ;----------------------------------------------------------
 
 .LCFEA          clr         inertiaCounter      ; clear counter
                 rts                             ;  and return (normal path)
-                
+
 ;-----------------------------------------------------------
 ; Start of Shutdown Sequence
 ;-----------------------------------------------------------
@@ -83,7 +83,7 @@ adcRoutine0     ldab        $0085               ; load X0085 bits value
                 ldab        $0088               ; load bits value
                 bitb        #$04                ; test X0088.2 (set when eng starts, never cleared)
                 bne         .LD005              ; branch if bit is high (branch if eng running)
-                
+
                                                 ; if here, eng not running
                 ldaa        $0054               ; load working value of Throttle Pot Minimum (TPmin)
                 staa        $0052               ; store TPmin in battery backed RAM
@@ -91,10 +91,10 @@ adcRoutine0     ldab        $0085               ; load X0085 bits value
 .LD005          ldaa        bits_2047           ; load bits value
                 bita        #$04                ; test bits_2047.2 (VSS fail bit)
                 bne         .copyRAM            ; branch if road speed sensor is bad
-                
+
                 bita        #$40                ; test bits_2047.6 (this bit is normally low)
                 beq         .copyRAM            ; branch if bit is low
-                
+
                 jsr         LF7A5               ; this subroutine is called only here, this is the only place
                                                 ; where battery backed location stprMtrSavedValue is written
 
@@ -107,7 +107,7 @@ adcRoutine0     ldab        $0085               ; load X0085 bits value
                 staa        $00,x
                 cpx         #$2073
                 bne         .copyRAMLoop        ; <-- End Copy Loop
-                
+
                 lds         #$00FF              ; reset stack ptr
 
                 ldab        $008B
@@ -132,7 +132,7 @@ adcRoutine0     ldab        $0085               ; load X0085 bits value
                 ldaa        bits_2047
                 oraa        #$80                ; set bits_2047.7 (controls timer in stepper mtr routine)
                 staa        bits_2047
-                
+
 ;------------------------------------------------
 ; Code branches here from above if the shutdown
 ; sequence has already started (X0085.2 is set)
@@ -145,7 +145,7 @@ adcRoutine0     ldab        $0085               ; load X0085 bits value
                 jsr         keepAlive           ; toggle stay-alive
                 ldab        iacMotorStepCount   ; load number of counts (init to 200 earlier)
                 bne         .LD053              ; *** end SM loop
-                
+
                 ldd         #$8001
                 std         stepperMtrCounter   ; reset stepperMtrCounter to $8001
                 staa        iacvVariable        ; reset iacvVariable to $80 (zero point)
@@ -155,7 +155,7 @@ adcRoutine0     ldab        $0085               ; load X0085 bits value
                 ldab        iacvDriveValue      ; stepper motor drive value
                 cmpb        #$87                ; $87 is 1 of 4 drive values and is the default
                 beq         .checkHiTemps       ; set stepper motor to position $87 before leaving loop
-                
+
                 ldab        #$01                ; not $87, so move 1 more step
                 stab        iacMotorStepCount   ; store 1
                 bra         .LD053              ; branch back to move stepper motor 1 more step
@@ -170,11 +170,11 @@ adcRoutine0     ldab        $0085               ; load X0085 bits value
                 ldaa        coolantTempCount    ; load ECT sensor count
                 cmpa        hotCoolantThreshold ; value from XC1EF ($14 = 102 deg C)
                 bcc         .shutdownRamChk     ; branch ahead if eng temp is cooler than this
-                
+
                 ldaa        fuelTempCount       ; engine is very hot, load EFT sensor count (fuel tmep)
                 cmpa        hotFuelThreshold    ; value from XC1F0 ($34 = 70 deg C)
                 bcc         .shutdownRamChk     ; branch ahead if underhood temp is cooler than this
-                
+
                 ldaa        port1data           ; Port P13 is condensor fan timer (high = OFF)
                 anda        #$F7                ; ground condenser fan timer to run fans for ~10 minutes
                 staa        port1data
@@ -201,12 +201,12 @@ adcRoutine0     ldab        $0085               ; load X0085 bits value
                 ldab        AdcStsDataHigh      ; load status reg
                 bitb        #$40                ; test ADC busy flag
                 bne         .LD0A6              ; branch back if ADC conversion not done
-                
+
                 ldaa        AdcDataLow          ; read ADC result (low 8 bits only)
                 cmpa        #$2A                ; compare with $2A
                 bcc         .LD0BD              ; branch to restart if voltage is > $2A
                 jmp         .LD0A1              ; <-- End Loop (loop back and wait for shutdown)
-                
+
 ;------------------------------------------------------------------------------
 .LD0BD          jmp         .LCFBA              ; jump to restart
 ;------------------------------------------------------------------------------

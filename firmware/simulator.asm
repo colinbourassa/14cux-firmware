@@ -24,7 +24,7 @@
 ;       immediatley called right after the main loop ADC measurment is made.
 ;       This replaces the actual measured value with one from the RAM area.
 ;
-;   5) In addition, 4 other ADC measurements are be made from the ICI. Here is 
+;   5) In addition, 4 other ADC measurements are be made from the ICI. Here is
 ;       how they are handled:
 ;               TPS Measurement -- uses in-line simulation code
 ;               MAF Measurement -- uses in-line simulation code
@@ -40,7 +40,7 @@
 ;   The second function generator is for the road speed (VSS) input signal to
 ;   the ECU. A 12 volt square wave is ideal, although a 7 Volt waveform should
 ;   work. TTL level will work if the threshold in the software is lowered.
-;   
+;
 ;   This describes use of the simulation RAM area. All values are 8-bit unless
 ;   otherwise noted.
 ;
@@ -104,7 +104,7 @@ simulation2     ldaa        $2072           ; [4] check the value that turns sim
                 cmpb        #$02            ; [2]
                 bcs         .lessThan2      ; [3] branch if channel 0 or 1
 
-                cmpb        #$03            ; [2] 
+                cmpb        #$03            ; [2]
                 bcc         .greaterThan3   ; [3] branch if channel 3 or greater
 
                 beq         .throttlePot    ; [3] branch if channel 3
@@ -123,7 +123,7 @@ simulation2     ldaa        $2072           ; [4] check the value that turns sim
                 ldx         #$2060          ; [5] use $2060 or $2061
                 abx                         ; [3]
                 ldaa        $00,x           ; [4]
-                staa        $00C9           ; [3]                
+                staa        $00C9           ; [3]
                 clra                        ; [2]
                 staa        $00C8           ; [3]
                 pulx                        ; [5]
@@ -246,33 +246,33 @@ simulation      ldaa        $2072           ; [4] check the value that turns sim
 ;
 ;   currently doing a toggle (50%)
 ;
-;   
+;
 ;
 ;------------------------------------------------------------------------------
 o2Simulation    ldab        $2072           ; [4]
                 cmpb        #$55            ; [2]
                 bne         .return         ; [3]
-                
+
                 tst         $0088           ; [6] which bank? (0 = left, 1 = right)
                 bpl         .left           ; [3] branch if left
-                
+
 .right          ldaa        $00A2           ; [3] <-- Right Bank
                 eora        #$80            ; [2] toggle bit 7
                 staa        $00A2           ; [3]
                 bpl         .low            ; [3]
-                
+
 .high           ldab        #$FF            ; [2]
                 rts                         ; [5]
-                
+
 .low            clrb                        ; [2]
                 rts                         ; [5]
-                
+
 .left           ldaa        $00A3           ; [3] <-- Left Bank
                 eora        #$80            ; [2] toggle bit 7
                 staa        $00A3           ; [3]
                 bpl        .low             ; [3]
                 bra        .high            ; [3]
-                
+
 ;------------------------------------------------------------------------------
 
 code

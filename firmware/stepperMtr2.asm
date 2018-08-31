@@ -28,8 +28,8 @@ LF5F0           ldaa        $0086               ; load bits value
                 ldaa        $008B               ; 0086.7 is one
                 bita        #$01                ; test X008B.0 (1 = road speed > 4 KPH)
                 bne         .LF600              ; branch if road speed > 4 K{H
-                
-                ldaa        #$FF                ; load $FF into A 
+
+                ldaa        #$FF                ; load $FF into A
                 bra         .LF610              ; return
 
 .LF600          ldaa        bits_2047           ; X0086.7 is zero
@@ -63,7 +63,7 @@ LF611           ldd         ignPeriod           ; load ignition period
                 subd        #$0001              ; decrement rpmIndicatorDelay
                 std         rpmIndicatorDelay   ; store value
                 bne         .LF639              ;  return if not zero
-                
+
                 ldd         $C240               ; when rpmIndicatorDelay gets to zero,
                 std         rpmIndicatorDelay   ; reset to 50
                 ldaa        bits_2047
@@ -85,10 +85,10 @@ LF611           ldd         ignPeriod           ; load ignition period
 LF63A           ldab        bits_2047
                 bitb        #$08                ; test bits_2047.3
                 beq         .LF657              ; return if bit 3 is zero
-                
+
                 ldaa        iacMotorStepCount   ; abs value of stepper mtr adjustment
                 bne         .LF657              ; return if iacMotorStepCount is not zero
-                
+
                 sei                             ; set interrupt mask
                 ldaa        $008A
                 oraa        #$01                ; set X008A.0 (stepper mtr direction bit, 1 = close)
@@ -109,7 +109,7 @@ LF63A           ldab        bits_2047
 LF658           ldaa        coolantTempCount    ; load ECT sensor count
                 cmpa        $C247               ; data value is $22 or $23 (about 88 deg C)
                 bcs         .LF677              ; branch way down if coolant temp is hotter than this
-                
+
                 ldab        iacvVariable        ; value starts at $80 and varies up or down
                 bmi         .LF679              ; branch ahead if iacvVariable is > $7F (bit 7 set)
 ;------------------------------
@@ -121,14 +121,14 @@ LF658           ldaa        coolantTempCount    ; load ECT sensor count
                 ldaa        iacvValue1          ; load A with iacvValue1 (128 +/-)
                 sba                             ; subtract B (delta) from A (iacvValue1)
                 bcs         .LF6E9              ; branch to rts if delta was greater
-                
+
                 cmpa        #$80                ; compare A with $80
                 bcc         .LF6E9              ; branch to rts if A is >= $80
-                
+
                 cmpa        $C261               ; data value is $53
                 bcc         .LF689              ; branch ahead if A is >= $53
                 rts                             ; return
-                
+
 ;----------------------------
 .LF677          bra         .LF6EA              ; this serves as a 2-step branch from above
 ;---------------------------------
@@ -138,7 +138,7 @@ LF658           ldaa        coolantTempCount    ; load ECT sensor count
                 ldaa        iacvValue1          ; load A iacvValue1
                 aba                             ; add them
                 bcs         .LF6E9              ; branch to rts if carry is set (value overflowed)
-                
+
                 cmpa        #$80                ; compare result with $80
                 bhi         .LF6E9              ; branch to rts if result is > $80
                 cmpa        $C261               ; data value is $53
@@ -150,22 +150,22 @@ LF658           ldaa        coolantTempCount    ; load ECT sensor count
                 ldab        iacvEctValue        ; value based on coolant temp (range 100 to 160)
                 std         $00CA               ; store value $00xx in X00CA/CB
                 ldd         stepperMtrCounter   ; a 16-bit value ($8000 +/-)
-                addd        $00C8               ; 
+                addd        $00C8               ;
                 bcs         .LF6CD
-                
+
                 subd        $00CA
                 bcs         .LF6C9
-                
+
                 std         $00C8
                 ldaa        stprMtrSavedValue   ; battery backed value (typically 108 decimal)
                 bpl         .LF6AF
-                
+
                 anda        #$7F
                 staa        $00CB
                 ldd         $00C8
                 subd        $00CA
                 bcs         .LF6C9
-                
+
                 bra         .LF6BB
 
 .LF6AF          ldaa        #$80
@@ -182,7 +182,7 @@ LF658           ldaa        coolantTempCount    ; load ECT sensor count
                 subd        $00C8
                 tsta
                 bne         .LF6CD
-                
+
                 bra         .LF6CF
 
 .LF6C9          ldab        #$00
@@ -211,7 +211,7 @@ LF658           ldaa        coolantTempCount    ; load ECT sensor count
 .LF6EA          ldaa        $0087
                 bita        #$02                ; test 0087.1 (indicates air flow sensor fault)
                 bne         .LF6F7
-                
+
                 ldaa        fuelMapLoadIdx      ; load the fuel map row (load) index
                 cmpa        $C243               ; compare with XC243 (for R3526, value is $20)
                 bcc         .LF6E9              ; return is row index is > $20
@@ -219,25 +219,25 @@ LF658           ldaa        coolantTempCount    ; load ECT sensor count
 .LF6F7          ldaa        coolantTempCount    ; load the ECT value
                 cmpa        $C246               ; for R3526, value is $1C (94 deg C)
                 bcs         .LF6E9              ; return if ECT is hotter than this
-                
+
                 cmpa        $C247               ; for R3526, value is $22 (88 deg C)
                 bcc         .LF6E9              ; rtn if ECT is cooler than this
-                
+
                 ldaa        bits_008D
                 bita        #$80                ; test bits_008D.7
                 bne         .LF720              ; branch ahead if it's set
-                
+
                 ldaa        fuelMapNumber       ; load fuel map number
                 beq         .LF712              ; branch ahead if it's zero (limp home)
-                
+
                 cmpa        #$04                ; compare fuel map number with 4
                 bcs         .LF6E9              ; return if less (fuel map is 1, 2 or 3)
-                
+
                                                 ; <-- code gets here only for maps 0, 4 and 5
 .LF712          ldd         shortLambdaTrimR    ; load right bank short term trim
                 subd        $C244               ; compare with XC422 (for R3526, value is $4721)
                 bcs         .LF6E9              ; rtn if left bank value is < $4721
-                
+
                 ldd         shortLambdaTrimL    ; load left bank short term trim
                 subd        $C244               ; compare with XC422 (for R3526, value is $4721)
                 bcs         .LF6E9              ; rtn if right bank value is < $4721
@@ -247,15 +247,15 @@ LF658           ldaa        coolantTempCount    ; load ECT sensor count
                 subb        #$80                ; subtract $80 from iacvVariable
                 aba                             ; add B to A (result to iacvValue1)
                 bcc         .LF731              ; branch ahead if result did not overflow
-                
+
                 ldab        iacvVariable        ; $80 +/-
                 bpl         .LF738              ; branch ahead if bit 7 is clear
-                
+
                 ldaa        #$FF                ; limit result to $FF
 
 .LF731          ldab        iacvVariable        ; $80 +/-
                 bmi         .LF738              ; branch ahead if iacvVariable is >= $80
-                
+
                 ldaa        #$00                ; limit result to $00
 
 .LF738          staa        iacvValue1          ; write value iacvValue1
@@ -278,7 +278,7 @@ LF658           ldaa        coolantTempCount    ; load ECT sensor count
                 clra
                 ldab        stprMtrSavedValue   ; battery backed value
                 bmi         .LF76B              ; branch ahead if stprMtrSavedValue is >= $80
-                
+
                 ldab        #$80                ; load $80
                 subb        stprMtrSavedValue   ; subtract stprMtrSavedValue (result is positive)
                 std         $00CA
@@ -294,7 +294,7 @@ LF658           ldaa        coolantTempCount    ; load ECT sensor count
                 clra
                 ldab        iacvValue1          ; $80 +/-
                 bpl         .LF77C              ; branch if iacvValue1 < $80
-                
+
                 andb        #$7F                ; bit 7 is set and being cleared here
                 addd        $00C8
                 bra         .LF78B
@@ -305,19 +305,19 @@ LF658           ldaa        coolantTempCount    ; load ECT sensor count
                 ldd         $00C8
                 subd        $00CA
                 bcc         .LF78B              ; branch ahead if borrow flag clear
-                
+
                 ldd         #$0000              ; else, limit value to zero
 
 .LF78B          std         stepperMtrCounter   ; 16-bit stepper motor counter value
                 cmpa        #$80
                 bcc         .LF796
-                
+
                 ldaa        #$01
                 bra         .LF7A2
 
 .LF796          subd        #$80B4
                 bcs         .LF79F
-                
+
                 ldaa        #$B4                ; $B4 is 180 decimal
                 bra         .LF7A2
 
@@ -325,7 +325,7 @@ LF658           ldaa        coolantTempCount    ; load ECT sensor count
 
 .LF7A2          staa        iacPosition         ; save it as stepper mtr position (zero to 180 value)
                 rts
-                
+
 ;------------------------------------------------------------------------------
 ;                  Fault Code 26 -- Very Lean Mixture Fault
 ;
@@ -338,23 +338,23 @@ LF658           ldaa        coolantTempCount    ; load ECT sensor count
 ;------------------------------------------------------------------------------
 LF7A5           ldab        iacvValue1          ; $80 +/-
                 bmi         .LF7CC              ; branch ahead if iacvValue1 >= $80
-                
+
 ;----------------------------
 ; iacvValue1 is less than $80
-;----------------------------                
+;----------------------------
                 ldd         faultCode26Counter  ; road speed distance accumulator
                 subd        $C24F               ; data value is $3E80 (16,000 dec)
                 bcs         .LF7EF              ; return if distance accumulator is < 16000
-                
+
                 ldaa        faultBits_4B        ; no unmasked fault bits used in this byte!
-                
+
                 ldab        iacvValue1          ; load iacvValue1 again
                 cmpb        $C251               ; data value is $71, compare with iacvValue1
                 bcc         .LF7CC              ; branch ahead if iacvValue1 > $71
-                
+
                 cmpb        $C252               ; data value is $4E
                 bcc         .LF7C5              ; branch ahead if iacvValue1 > $4E
-                
+
                 oraa        #$02                ; <-- Set Fault Code 26 (very lean mixture fault -- unused)
                 staa        faultBits_4B
                 bra         .LF7EF              ; return
@@ -371,23 +371,23 @@ LF7A5           ldab        iacvValue1          ; $80 +/-
                 subb        #$80                ; subtract $80
                 aba                             ; add B to A
                 bcc         .LF7D9              ; branch if overflow
-                
+
                 ldab        iacvValue1          ; load iacvValue1
                 bpl         .LF7DF              ; branch if < $80
-                
+
                 ldaa        #$FF
 
-.LF7D9          ldab        iacvValue1          ; load iacvValue1 
+.LF7D9          ldab        iacvValue1          ; load iacvValue1
                 bmi         .LF7DF              ; branch if >= $80
-                
+
                 ldaa        #$00
 
 .LF7DF          cmpa        #$8E                ; compare A with $8E
                 bcc         .LF7EB              ; if A < $8E, branch to set stprMtrSavedValue to $8E and rtn
-                
+
                 cmpa        #$49                ; compare A with $49
                 bcc         .LF7ED              ; if A < $49, branch to store at stprMtrSavedValue and return
-                
+
                 ldaa        #$49                ; else, set stprMtrSavedValue to $49 and return
                 bra         .LF7ED
 
@@ -410,16 +410,16 @@ LF7A5           ldab        iacvValue1          ; $80 +/-
 LF7F0           ldaa        faultBits_4B        ; load fault bits
                 bita        #$02                ; test unused fault code 26
                 beq         .LF830              ; return if bit is clear
-                
+
                 ldd         targetIdleRPM       ; load engine idle target (16-bit value)
                 subd        $C255               ; data value is $01F9 (subtract 505 RPM)
                 subd        engineRPM           ; subtract actual eng RPM
                 bcs         .LF829              ; branch ahead if (target - 505) < actual_RPM
-                
+
                                                 ; if here, RPM is lower than this
                 ldaa        iacMotorStepCount   ; absolute value of stepper mtr adjustment
                 bne         .LF830              ; return if iacMotorStepCount not zero (idle adjust progress)
-                
+
                 sei                             ; set interrupt mask
                 ldaa        $008A               ; bits value
                 anda        #$FE                ; clr X008A.0 (stepper mtr direction bit, 0 = open)
@@ -429,10 +429,10 @@ LF7F0           ldaa        faultBits_4B        ; load fault bits
                 ldaa        stprMtrSavedValue   ; load battery-backed value
                 suba        #$49                ; subtract $49
                 bcs         .LF81F              ; branch ahead if stprMtrSavedValue < $49
-                
+
                 suba        $C257               ; subtract $0F
                 bcc         .LF825              ; branch if result was > $0F
-                
+
                 adda        iacvValue1          ; add iacvValue1 to result
                 staa        iacvValue1          ; and store new iacvValue1
 
@@ -443,7 +443,7 @@ LF7F0           ldaa        faultBits_4B        ; load fault bits
 .LF825          adda        #$49                ; add $49 to A
                 staa        stprMtrSavedValue   ; store it
 
-.LF829          ldaa        faultBits_4B        ; 
+.LF829          ldaa        faultBits_4B        ;
                 anda        #$FD                ; clear unused fault code 26
                 staa        faultBits_4B
                 cli                             ; clear interrupt mask
@@ -453,59 +453,59 @@ LF7F0           ldaa        faultBits_4B        ; load fault bits
 ;------------------------------------------------------------------------------
 ;               *** Idle Air Control (stepper motor) Fault Test ***
 ;
-;    This is called from the main loop. 
+;    This is called from the main loop.
 ;    It handles the Idle Air Control Fault Bit -- Code 48
 ;------------------------------------------------------------------------------
 LF831           ldaa        $0087
                 bita        #$02                ; test 0087.1 (indicates air flow sensor fault)
                 bne         .LF8B3              ; if 0087.1 is set, return (normally clr)
-                
+
                 ldaa        coolantTempCount    ; load coolant temperature
                 cmpa        $C248               ; for R3526, value is $22 (a warmed engine)
                 bcc         .LF8B3              ; if greater than (cooler than) this, return
-                
+
                 ldaa        bits_2047
                 bita        #$01                ; test bits_2047.0 <-- (is this the idle mode bit??)
                 beq         .LF8B3              ; if bit is clear, return
-                
+
                 ldd         ignPeriod          ; load spark period
                 subd        #$3C67              ; subtract equivalent of 485 RPM
                 bcc         .LF8B3              ; return if eng spd is LT 485 RPM
-                
+
                 ldaa        fuelMapLoadIdx      ; load the fuel map row index
                 cmpa        $C266               ; for R3526, value is 0x28
                 bcc         .LF8B3              ; if FM Row Index is > 0x28, return
-IF BUILD_R3360_AND_LATER                
+IF BUILD_R3360_AND_LATER
                 ldaa        faultBits_49        ; fault bits (Griff does NOT have this)
                 bita        #$06                ; test for O2 sensor faults
                 bne         .LF8B3              ; if O2 sensor faults are active, return
-ENDC                
+ENDC
                 ldaa        iacvVariable        ; initial value is $80
                 bpl         .LF87C              ; branch ahead if bit 7 is clr (less than $80)
 
                                                 ; <-- iacvVariable is >= $80
                 cmpa        $C24E               ; for R3526, value is $C6 (128 + 70 dec)
                 bcs         .LF8B3              ; if LT 198, return
-IF BUILD_R3360_AND_LATER                
+IF BUILD_R3360_AND_LATER
                 ldd         targetIdleRPM       ; idle target (Griff does NOT have this code)
                 addd        $C7E1               ; add 200 dec
                 subd        engineRPM           ; subtract eng RPM
                 bcc         .LF8B3              ; return if eng spd is < (target + 200)
-ENDC                
+ENDC
                 ldd         mafVariable         ; typically varies around 600 to 1400 dec
                 subd        mafLinear           ; subtract linear MAF (double op)
                 bcs         .LF8AD              ; <-- branch to set DTC 48 (if MAF > mafVariable)
-                
+
                 subd        $C24B               ; subtract 150
                 bcs         .LF8AD              ; <-- bra to set DTC 48 (if mafVariable is < 150 more than MAF)
-                
+
                 bra         .LF8B3              ; return
 
                                                 ; <-- if iacvVariable is < 128
 .LF87C          cmpa        $C24D               ; for R3526, value is $3A (58 dec)
                 bcc         .LF8B3              ; rtn if value is > $3A
-                
-IF BUILD_R3360_AND_LATER                
+
+IF BUILD_R3360_AND_LATER
                 ldaa        closedLoopDelay     ; this is the 16->0 startup down-counter
                 bne         .LF8B3              ; branch ahead if down-counter not zero
                 ldaa        shortLambdaTrimR    ; MSB of right side value (128 +/-)
@@ -524,7 +524,7 @@ IF BUILD_R3360_AND_LATER
 .LF899          suba        #$80
                 cmpa        $C7E3               ; for R3526, value is $40
                 bcc         .LF8B3              ; rtn if carry clear
-ENDC                
+ENDC
 
                 ldd         mafLinear           ; load linear MAF (double value)
                 subd        mafVariable         ; typically varies around 600 to 1400
@@ -651,7 +651,7 @@ CalcIacvVariable    ldab        #$80                ; inital value for iacvVaria
                 ldd         engineRPM           ; load eng RPM (ranges from idle to 1950)
                 subd        targetIdleRPM       ; subtract engine idle target speed
                 bcc         .LF95A              ; branch up if eng speed above target
-                
+
                                                 ; <-- eng RPM too high
 .LF972          pulb                            ; pull calculated value
                 ldaa        iacvVariable        ; iacvVariable varies around 128 (100 to 140)
@@ -669,14 +669,14 @@ CalcIacvVariable    ldab        #$80                ; inital value for iacvVaria
                 suba        iacvVariable        ;
                 suba        $C25B               ;
                 bcs         .LF99D
-                ldab        iacvVariable        ; 
-                addb        $C25B               ; 
+                ldab        iacvVariable        ;
+                addb        $C25B               ;
                 bcc         .LF99D
                 ldab        #$FF
                                                 ; other than reset, iacvVariable is only written here
 .LF99D          stab        iacvVariable        ; iacvVariable typically varies between 100 and 140
                 rts
-                
+
 ;------------------------------------------------------------------------------
 ;                   *** Calculate 'iacvEctValue' ***
 ;

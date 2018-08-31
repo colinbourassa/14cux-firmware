@@ -29,11 +29,11 @@ adcRoutine5     staa        neutralSwitchVal    ; this is compared elsewhere wit
                 ldab        $0085
                 andb        #$02                ; isolate X0085.1
                 bne         .LD354              ; branch ahead if X0085.1 is set
-                
+
                 ldab        $008A               ; bits value
                 cmpa        #$B3                ; compare ADC value with $B3
                 bcc         .LD350              ; branch if reading GT $B3 (auto in drive)
-                
+
                                                 ; if here, auto in park or manual
                 andb        #$CF                ; clr X008A.5 and X008A.4
                 orab        #$10                ; set X008A.4
@@ -47,10 +47,10 @@ adcRoutine5     staa        neutralSwitchVal    ; this is compared elsewhere wit
                 andb        #$30                ; isolate X008A.5 and X008A.4
                 cmpa        #$B3                ; compare ADC value with $B3
                 bcc         .LD366              ; branch ahead if >= $B3
-                
+
                 cmpb        #$30                ; test X008A.5 and X008A.4
                 bne         .LD372              ; return if not zero
-                
+
                 ldab        $008A               ; load bits value again
                 andb        #$CF                ; clr X008A.5 and X008A.4
                 bra         .LD370              ; store X008A and return

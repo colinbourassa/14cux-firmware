@@ -26,7 +26,7 @@ code
 
 adcRoutine10    ldab        fuelMapLock             ; load fuel map lock value
                 beq         .LD552                  ; branch ahead if zero
-                
+
                 ldab        #$05                    ; else...
                 stab        fuelMapNumber           ; load 5 as fuel map
                 stab        fuelMapNumberBackup     ;
@@ -64,26 +64,26 @@ adcRoutine10    ldab        fuelMapLock             ; load fuel map lock value
                 cmpa        #$F6                ; (96%) less than $F6 = map 5
                 bcs         .LD571
                 clrb                            ;    greater than $F6 = map 0
-                
+
 ;------------------------------------------------------------------------------
 ; X0085.7 goes to 1 when ignition is turned on and is cleared when engine
 ; RPM exceeds a minimum value (to indicate that engine is running)
-;------------------------------------------------------------------------------                
+;------------------------------------------------------------------------------
                                                 ; at this point B is the map number (0 through 5)
 .LD571          ldaa        $0085               ; X0085.7 indicates no or low eng RPM (eng not running)
                 bmi         .LD5B5              ; if set (engine not running) branch to fuel map selector code
-                
+
 ;------------------------------------------------------------------------------
 ; Engine is running
 ;------------------------------------------------------------------------------
                 ldaa        bits_2038           ; if here, engine is running
                 bita        #$04                ; test bits_2038.2 (indicates fuel map resistor fault 21)
                 bne         .LD58F              ; branch if fault 21 is already set
-                
-                ldaa        fuelMapNumber       ; else, compare fuel map number 
+
+                ldaa        fuelMapNumber       ; else, compare fuel map number
                 cmpa        fuelMapNumberBackup ; with value saved in battery-backed memory (X0050)
                 bne         .LD593
-                
+
                 ldaa        bits_2038           ; if here, fuel map numbers match
                 oraa        #$04                ; set bits_2038.2
                 staa        bits_2038               ;
@@ -101,7 +101,7 @@ adcRoutine10    ldab        fuelMapLock             ; load fuel map lock value
 .LD593          ldaa        tuneResistorDelay   ; load fault 21 delay counter
                 cmpa        #$FF                ; compare with $FF
                 beq         .LD5A6              ; if counter = $FF, branch to set fault bit
-                
+
                 inca                            ; increment the counter
                 staa        tuneResistorDelay   ; store it
                 ldaa        bits_2038

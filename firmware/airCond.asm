@@ -17,15 +17,15 @@
 ;
 ;   bits_205B.3         Only used in this routine (set when ECT > 226 F, cleared when ECT < 221 F)
 ;   bits_205B.4         Only used in this routine (set when engine starts)
-;   bits_2059.1         Only used in this routine 
+;   bits_2059.1         Only used in this routine
 ;   acCounter           Only used in this routine (up-counter)
 ;   startupDownCount1Hz Down-counter (decremented by road speed comparator routine)
-;    
+;
 ;   These are the outputs of this routine:
 ;   008A.3  Main loop A/C compressor control
 ;               (1 = A/C OFF, clear P2.2)
 ;               (0 = A/C ON,    set P2.2)
-;   bits_008C.7  ICI A/C compressor control       
+;   bits_008C.7  ICI A/C compressor control
 ;               (0 = A/C OFF, clear P2.2)
 ;               (1 = A/C ON,    set P2.2)
 ;
@@ -58,7 +58,7 @@ adcRoutine6     psha                            ; push the air cond load reading
                 bra         .LD277
 ;-----------------------------------------------------------
 ;        Engine started flag not set
-;        
+;
 ;  Check filtered ign period for 500 RPM (375 for CWC)
 ;-----------------------------------------------------------
                                                 ; 1-time code at startup
@@ -67,7 +67,7 @@ adcRoutine6     psha                            ; push the air cond load reading
                 bcc         .LD277              ; branch ahead if eng spd is less than this (eng not running)
 ;-----------------------------------------------------------
 ;            Engine has started
-;            
+;
 ;  Set A/C down counter to 12 and set engine started flag
 ;-----------------------------------------------------------
                 ldab        init1HzStartDownCount   ; data value from XC7DF (usually 12)
@@ -77,7 +77,7 @@ adcRoutine6     psha                            ; push the air cond load reading
                 stab        bits_205B
 ;-----------------------------------------------------------
 ;  Always executed (all paths get here)
-;  
+;
 ;  After down-counter timeout, condition bit bits_205B.3
 ;  which indicates very hot engine coolant.
 ;-----------------------------------------------------------
@@ -114,45 +114,45 @@ adcRoutine6     psha                            ; push the air cond load reading
                 andb        #$F7                ; clr bits_205B.3 (coolant temp is cooler than 221 F)
                 stab        bits_205B
 
-                ldab        bits_2059           ; bits_2059.1 is used only in this routine                
+                ldab        bits_2059           ; bits_2059.1 is used only in this routine
 ELSE
-    
+
 ;-----------------------------------------------------------
 ; Old style A/C code starts here
 ;-----------------------------------------------------------
 adcRoutine6     ldab        bits_2059           ; bits_2059.1 is used only in this routine
 
-ENDC                                
+ENDC
                 tsta                            ; test A/C reading
                 bpl         .LD2CE              ; branch if < $80
-                
+
 ;-----------------------------------------------------------
 ;           A/C Reading is >= $80 (A/C is ON)
 ;-----------------------------------------------------------
                 bitb        #$02                ; test bits_2059.1 (used in this routine only)
                 bne         .LD2E7              ; if set, branch ahead
-                
+
                 inc         acCounter           ; increment up-counter
                 ldaa        $C7D0               ; for R3526, value is $0A
                 cmpa        acCounter           ; compare acCounter with $0A
                 bcc         .LD2EA              ; branch ahead if counter is GT $0A
-                
+
                 orab        #$02                ; set bits_2059.1
                 clr         acCounter           ; clr acCounter
                 stab        bits_2059
                 bra         .LD2EA
-                
+
 ;-----------------------------------------------------------
 ;           A/C Reading is < $80 (A/C is OFF)
 ;-----------------------------------------------------------
 .LD2CE          bitb        #$02                ; test bits_2059.1 (used in this routine only)
                 beq         .LD2E7
-                
+
                 inc         acCounter           ; increment acCounter
                 ldaa        $C7D0               ; for R3526, value is $0A
                 cmpa        acCounter
                 bcc         .LD2EA
-                
+
                 andb        #$FD                ; clr bits_2059.1 (used in this routine only)
                 clr         acCounter           ; reset counter to zero
                 stab        bits_2059
@@ -166,7 +166,7 @@ ENDC
 
 .LD2EA          bitb        #$02                ; test bits_2059.1 (set when A/C ON, clrd when OFF)
                 beq         .LD2F2
-                
+
                 ldaa        #$FF                ; <-- A/C is ON, if jmp to LD49E, will set bits_008C.7
                 bra         .LD2F4
 ;-----------------------------------------------------------
@@ -185,11 +185,11 @@ ENDC
 .LD2FC          ldab        $0085
                 bitb        #$02                ; test X0085.1 (extra eng load?)
                 bne         .LD315              ; branch ahead if bit is high
-                
+
                 ldab        $008A
                 tsta                            ; test X0085.7 (low eng RPM?)
                 bpl         .LD30E              ; branch ahead if X0085.7 is low
-                
+
                 andb        #$F3                ; clr X008A.3 and X008A.2 (to indicate A/C is ON)
                 ldaa        $C1E5               ; for R3526, val is $2C (44 dec)
                 bra         .LD327              ; branch to store values and return
@@ -213,7 +213,7 @@ ENDC
 ;-----------------------------------------------------------
                 cmpb        #$0C                ; A is $FF, check for both X008A.3 and X008A.2 high
                 bne         .LD32B              ; return if both bits not high
-                
+
                 ldab        $008A               ; clear both
                 andb        #$F3                ; clr X008A.3 and X008A.2
                 ldaa        $C1E5               ; for R3526, val is $2C (44 dec)
@@ -228,7 +228,7 @@ ENDC
 ;-----------------------------------------------------------
 .LD32C          cmpb        #$04
                 bne         .LD32B              ; return if X008A not $04 (X008A.3 low, X008A.2 high)
-                
+
                 ldab        $008A               ; else, set them that way
                 orab        #$08                ; set X008A.3
                 andb        #$FB                ; clr X008A.2
@@ -252,13 +252,13 @@ adcRoutine6     ldab        bits_2059
 ;-----------------------------------------------------------
                 bitb        #$02
                 bne         .LD20A
-        
+
                 inc         acCounter
                 ldaa        $C7D0
                 cmpa        acCounter
                 bcc         .LD20D
 
-                orab        #$02		        
+                orab        #$02
                 clr         acCounter
                 stab        bits_2059
                 bra         .LD20D
@@ -269,13 +269,13 @@ adcRoutine6     ldab        bits_2059
                 beq         .LD20A
 
                 inc         acCounter
-                ldaa	    $C7D0
-                cmpa	    acCounter
+                ldaa        $C7D0
+                cmpa        acCounter
                 bcc         .LD20D
 
-                andb	    #$FD
+                andb        #$FD
                 clr         acCounter
-                stab	    bits_2059
+                stab        bits_2059
                 bra         .LD20D
 ;-----------------------------------------------------------
 ; Both above blocks branch to here if bits_2059.1 has already
@@ -318,29 +318,29 @@ adcRoutine6     ldab        bits_2059
 ; Only 1 path here when 0085.1 is high (extra eng load?)
 ;-----------------------------------------------------------
 .LD238          ldab        $008A
-                andb	    #$0C
-	            tsta
-                bpl	        .LD24F
+                andb        #$0C
+                tsta
+                bpl        .LD24F
 ;-----------------------------------------------------------
 ; A = $FF, A/C is ON
 ;-----------------------------------------------------------
                 cmpb        #$0C
                 bne         .LD24E
-		        
+
                 ldab        $008A
                 andb        #$F3
                 ldaa        $C1E5
-		        
+
 .LD24A          stab        $008A
                 staa        acDownCounter
-		        
+
 .LD24E          rts
 ;-----------------------------------------------------------
 ; A = $00, A/C is OFF    (Only 1 path here from above)
 ;-----------------------------------------------------------
 .LD24F          cmpb         #$04
                 bne         .LD24E
-		        
+
                 ldab        $008A
                 orab        #$08
                 andb        #$FB

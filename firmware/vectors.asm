@@ -18,9 +18,9 @@
 *               =           $FFE0               ; The positions of the data/vectors at the
                                                 ; end of the ROM are fixed, so set the PC
                                                 ; explicitly here.
-                                                
+
                 DW          CRC16               ; unused, no need to update
-                
+
                 DW          $FFFF, $FFFF, $FFFF
 
 *               =           $FFE8               ; this location is important

@@ -14,14 +14,14 @@
 
 ;   Low  at ADC is ON   (less than $80)
 ;   High at ADC is OFF  (greater than $7F)
-;    
+;
 ;------------------------------------------------------------------------------
 code
 
 adcRoutine1     ldab        $0085               ; X0085.1 may indicate extra engine load
                 andb        #$02                ; isolate X0085.1
                 bne         .LD50E              ; branch ahead if X0085.1 is set
-                
+
                 ldab        $00DD               ; if here, eng load bit is zero
                 tsta                            ; A accum is 8-bit ADC reading
                 bmi         .LD50A              ; branch ahead if ADC reading > $7F

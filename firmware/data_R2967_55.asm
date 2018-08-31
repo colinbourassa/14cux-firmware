@@ -37,7 +37,7 @@ NEW_STYLE_MIL_CODE      = 0
 
 ;----------------------------------------------------------
 ; This section recreates the data at the end of the ROM
-; (just before the vectors). The only thing here that 
+; (just before the vectors). The only thing here that
 ; affects the code is the checksum fixer.
 ;----------------------------------------------------------
 CRC16                   = $D2AA     ; addr FFE0/E1
@@ -81,7 +81,7 @@ SIM_CONTROL_BYTE    EQU  $55
 
 ;----------------------------------------------------------
 ; These values can differ from one tune version to the
-; next, so they are defined here. 
+; next, so they are defined here.
 ;----------------------------------------------------------
 initialRpmLimit   = $0523   ; used in reset.asm (5703 RPM)
 initialRpmMargin  = $0F     ; used in reset.asm
@@ -114,14 +114,14 @@ mapAdcMuxTableOffset = $7A
 ;----------------------------------------------------------
 *               = $C000
 romStart        = *
-limpHomeMap DB  $21,$21,$21,$21,$1F,$1D,$1A,$19,$19,$19,$19,$19,$18,$14,$14,$14		
-            DB  $3F,$3E,$3D,$3B,$3A,$39,$39,$39,$3B,$3C,$3B,$39,$35,$30,$30,$30		
-            DB  $60,$5F,$5E,$5F,$60,$63,$61,$61,$61,$62,$60,$5F,$55,$4C,$4C,$4C		
-            DB  $92,$92,$90,$90,$8C,$90,$90,$88,$88,$84,$85,$85,$79,$6C,$6C,$6C		
-            DB  $B7,$B4,$B5,$B5,$B6,$B1,$AB,$AB,$AB,$AB,$A9,$A8,$97,$8E,$8E,$8E		
-            DB  $FF,$1C,$D7,$1C,$D7,$DA,$DD,$DE,$E8,$DD,$D8,$D8,$D3,$D3,$BF,$C9		
-            DB  $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FA,$DC,$E6,$E6,$E6,$E4,$F0		
-            DB  $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FB,$FA,$FA,$FA,$FD,$FD		
+limpHomeMap DB  $21,$21,$21,$21,$1F,$1D,$1A,$19,$19,$19,$19,$19,$18,$14,$14,$14
+            DB  $3F,$3E,$3D,$3B,$3A,$39,$39,$39,$3B,$3C,$3B,$39,$35,$30,$30,$30
+            DB  $60,$5F,$5E,$5F,$60,$63,$61,$61,$61,$62,$60,$5F,$55,$4C,$4C,$4C
+            DB  $92,$92,$90,$90,$8C,$90,$90,$88,$88,$84,$85,$85,$79,$6C,$6C,$6C
+            DB  $B7,$B4,$B5,$B5,$B6,$B1,$AB,$AB,$AB,$AB,$A9,$A8,$97,$8E,$8E,$8E
+            DB  $FF,$1C,$D7,$1C,$D7,$DA,$DD,$DE,$E8,$DD,$D8,$D8,$D3,$D3,$BF,$C9
+            DB  $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FA,$DC,$E6,$E6,$E6,$E4,$F0
+            DB  $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FB,$FA,$FA,$FA,$FD,$FD
 
             DW          $54DD               ; fuel map multiplier (21725 dec)
 
@@ -144,19 +144,19 @@ limpHomeMap DB  $21,$21,$21,$21,$1F,$1D,$1A,$19,$19,$19,$19,$19,$18,$14,$14,$14
             DB          $08,$9D             ; Used for comparison with engine ignition period (3400 RPM)
             DB          $01                 ; Used as a multiplication factor
             DB          $1B,$58             ; (possibly unused values)
-tpFastOpenThreshold  DB     $00,$18
+tpFastOpenThreshold  DB $00,$18
             DB          $02                 ; Used in fuel temp thermistor routine
             DB          $32                 ; Used in fuel temp thermistor routine
             DB          $00,$02             ; Used in main loop
             DB          $07,$80             ; Used in fuel temp thermistor routine
-hiFuelTempThreshold  DB     $65
+hiFuelTempThreshold  DB $65
 
 LC0B5       DB          $00,$24,$38,$91,$AB,$C2,$E0,$EE ; Data table used in coolant temp routine
             DB          $26,$26,$29,$2C,$32,$38,$43,$4E
             DB          $00,$09,$02,$0E,$10,$17,$32,$14
 
             DB          $70                 ; Fault code & default coolant sensor value
-rsFaultSlowdownThreshold DW $0800               ; Road Speed Sensor Fault registers after this many counts
+rsFaultSlowdownThreshold DW $0800           ; Road Speed Sensor Fault registers after this many counts
 
             DB          $00,$12,$1B,$25,$47,$75,$99,$B0,$C8,$DA,$E4,$E8 ; Table referenced in coolant temp routine
             DB          $0B,$0A,$07,$0D,$1A,$1C,$31,$46,$4E,$59,$6D,$75 ; Offset = 12
@@ -234,7 +234,7 @@ LC196       DB          $59,$5C,$5E,$60,$62,$65,$67,$69 ; (C196 is referenced in
             DW          $043D               ; subtracted from sum of air flow values in ICI
             DB          $15                 ; compared with counter value in 0094 or 0095 in ICI
             DW          $0100               ; subtracted from air flow sum in ICI
-                
+
 engDataA    DW          $0065               ; Values for X9x00 (Type 5) Use this for R3526
 engDataB    DW          $0067
 engDataC    DW          $005d
@@ -263,13 +263,13 @@ engInitDataC  DB        $04                 ; Init value for X9200
             DB          $2C                 ; This inits the value in acDownCounter to 44 dec
             DB          $2C                 ; This inits the value in acDownCounter to 44 dec (alt. code path)
             DW          $0200               ; value used in ICI only
-idleAdjForHeatedScreen  DW  $0000               ; Value zero (idle setting adjustment for heated screen)
+idleAdjForHeatedScreen  DW  $0000           ; Value zero (idle setting adjustment for heated screen)
             DB          $08
             DB          $02                 ; Used in ICI
             DB          $04                 ; Used in ICI
             DB          $0C                 ; Misfire fault threshold?
-hotCoolantThreshold   DB    $14                 ; If either the coolant or fuel temps exceeds their threshold, the
-hotFuelThreshold      DB    $34                 ;    condenser fan timer will be set to run the fans at shutdown
+hotCoolantThreshold   DB    $14             ; If either the coolant or fuel temps exceeds their threshold, the
+hotFuelThreshold      DB    $34             ;    condenser fan timer will be set to run the fans at shutdown
             DB          $56                 ; Compared with left short term trim in ICI
             DB          $30                 ; Compared with left and right short term trim in ICI (fault code related?)
             DB          $E0                 ; Compared with left and right short term trim in ICI (fault code related?)
@@ -288,7 +288,7 @@ accelPumpTable  DB          $00,$14,$28,$32,$3F,$52,$66,$7E,$AC,$AD,$C3,$D0 ; XC
                 DB          $0C,$0C,$0E,$12,$13,$14,$16,$18,$1E,$1E,$1E,$1E ; XC212: Offset of 12 from cooland temp table
 
                 DB          $07,$25,$22
-	
+
                 DB          $47                 ; for fuel map 0, 4 and 5
                 DB          $1E
                 DW          $1000
@@ -412,7 +412,7 @@ LC48A       DB          $3C
             DB  $AB,$AB,$AB,$AB,$AB,$A9,$A1,$A0,$9F,$93,$8F,$8B,$8A,$88,$86,$88
             DB  $E4,$E4,$E4,$D8,$D3,$CE,$CE,$D3,$D3,$C7,$B9,$B7,$B5,$B4,$B2,$B4
             DB  $EC,$EC,$EC,$EC,$EC,$EF,$E8,$FC,$F5,$EE,$D3,$CD,$CD,$CB,$CB,$D0
-            DB  $EC,$EC,$EC,$EC,$EC,$EF,$EC,$FC,$FF,$EE,$EC,$F0,$F0,$EE,$EE,$EE         
+            DB  $EC,$EC,$EC,$EC,$EC,$EF,$EC,$FC,$FF,$EE,$EC,$F0,$F0,$EE,$EE,$EE
 
             DW          $5DBE               ; fuel map multiplier
 
@@ -472,7 +472,7 @@ LC697   DB  $87,$86,$02,$03,$84,$02,$8D,$88,$02,$8B,$80,$85,$81,$8E,$FA,$FA ; AD
     DB $2C       ; value stored in X200F    (a coolant temperature threshold)
     DB $5C       ; value stored in X2010    (todo)
     DB $64       ; value stored in X2011    (multiplied by abs of throttle delta)
-    
+
 ;------------------------------------------------------------------------------
 
 ; Fuel Map 5 for 1994 TVR Griffith 500 (R2967)
@@ -492,7 +492,7 @@ fuelMap5    DB  $1C,$1C,$1C,$1B,$1B,$1B,$1B,$19,$19,$19,$18,$15,$14,$13,$13,$13
 ; the resultant value is offset by adding 1024, stored at 0x005D/5E and ultimately used
 ; to dynamically adjust the fueling
 ; (added note: if CT count is $23 for example, the 2nd col would be used, not the 1st)
-							
+
 LC731       DB      $18,$31,$5A,$73,$89,$99,$B3,$CC,$DD,$EA    ; <-- coolant temp sensor reading (low is hot, high is cold)
 LC73B       DB      $05,$06,$08,$0A,$10,$1C,$23,$28,$30,$30    ; <-- throttle opening (compare value or limit)
 LC745       DB      $04,$06,$07,$08,$08,$00,$00,$00,$00,$00    ; <-- throttle closing (compare value or limit)
@@ -566,19 +566,19 @@ LC7DB   DW  $05DC   ; (1500 dec) subtract from short term trim in s/r (bank rela
 ; code is padded with 5A, A5 and A7.
 ;------------------------------------------------------------------------------
 
-        DB  $5A		; $0F in R3526 (A/C servic routine)
-        DB  $A5		; $01 in R3526 (A/C service routine)
-        DB  $5A	    ; $0C in R3526 (A/C service routine, 1 Hz countdown)
-        DB  $A5		; $65 in R3526 (coolant temp threshold in ICI)
-        DW  $5AA5	; $00C8 in R3526 (idle spd value used in stepper mtr fault test))
-        DB  $5A		; $40 in R3526 (used in stepper motor fault test)
+        DB  $5A     ; $0F in R3526 (A/C servic routine)
+        DB  $A5     ; $01 in R3526 (A/C service routine)
+        DB  $5A     ; $0C in R3526 (A/C service routine, 1 Hz countdown)
+        DB  $A5     ; $65 in R3526 (coolant temp threshold in ICI)
+        DW  $5AA5   ; $00C8 in R3526 (idle spd value used in stepper mtr fault test))
+        DB  $5A     ; $40 in R3526 (used in stepper motor fault test)
 
-        DB  $A5,$5A,$A5,$5A,$A5,$5A,$A5,$5A	    ; unused (FF in NAS data)
+        DB  $A5,$5A,$A5,$5A,$A5,$5A,$A5,$5A    ; unused (FF in NAS data)
         DB  $A5,$5A,$A5,$5A,$A5,$5A,$A5,$5A
         DB  $A5,$5A,$A5,$5A,$A5,$5A,$A5,$5A
         DB  $A7,$5A,$A7
 
-        DB  $1A						            ; unknown
+        DB  $1A     ; unknown
 
 ;------------------------------------------------------------------------------
 ;                               RPM Table

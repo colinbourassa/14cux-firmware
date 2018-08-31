@@ -42,11 +42,11 @@ purgeValveInt   ldaa        timerCSR            ; OCF2 flag is reset by reading 
                 ldaa        $00E2
                 bita        #$10                ; test X00E2.4
                 bne         .LDB24              ; branch ahead if bit is set
-                
+
                 ldd         purgeValveTimer     ; load purge valve timer value
                 subd        #$0FA0              ; subtract 4000 dec
                 bcs         .LDB24              ; branch to .LDB24 if value < 4000 dec
-                
+
                 subd        #$61A8              ; subtract 25,000 dec
                 bcc         .LDB2E              ; branch to .LDB2E if value > 29,000
 
@@ -67,7 +67,7 @@ purgeValveInt   ldaa        timerCSR            ; OCF2 flag is reset by reading 
 .LDB28          staa        port1data
                 ldd         ocr2high            ; just read ocr2 so we can write it back and clear the flag
                 bra         .LDB3B              ; branch down to write it back to register and rti
-                                                
+
 .LDB2E          ldaa        port1data           ; if here, purgeValveTimer > 29,000
                 anda        #$FD                ; clear P1.1 to turn it ON
                 bra         .LDB28

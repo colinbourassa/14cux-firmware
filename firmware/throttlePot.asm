@@ -41,7 +41,7 @@ code
 TpFaultCheck    std         throttlePot
                 subd        #dtc17_tpsMinimum   ; fault code 17 threshold
                 bcc         .LCD12              ; branch if TPS > threshold
-                
+
                 ldd         #throttlePotDefault ; failure, so use the default value
                 std         throttlePot
                 tba                             ; default value is 8-bits, fits in A
@@ -52,11 +52,11 @@ TpFaultCheck    std         throttlePot
 
 .LCD12          ldaa        tpFaultSlowdown     ; load counter
                 beq         .LCD26              ; branch ahead if zero
-                
+
                 ldd         throttlePot         ; load 10-bit TPS value
                 subd        #$00CD              ; subtract 205 dec (1.0 Volt) from value
                 bcs         .tpLessThan1V       ; branch ahead if less than 1 volt
-                
+
                 dec         tpFaultSlowdown         ; TPS > 1 V, decrement counter
 
 .tpLessThan1V   ldd         #throttlePotDefault     ; continue with default value
@@ -98,7 +98,7 @@ TpFaultCheck    std         throttlePot
 adcRoutine3     ldaa        $008B               ; load bits value
                 anda        #$01                ; test X008B.0 (1 means road speed > 4 KPH)
                 bne         .roadSpeedGT4       ; if 1, branch
-                
+
 ;-------------------------------
 ; Road Speed is less than 4 KPH
 ;-------------------------------
@@ -115,7 +115,7 @@ adcRoutine3     ldaa        $008B               ; load bits value
                 bsr         TpFaultCheck        ; call fault routine above (tests for low RPM before return)
                 bpl         .LCD5E              ; branch if engine is running
                 jmp         .LCE58              ; engine not running, branch way down
-                
+
 ;-------------------------------
 ; Road Speed is more than 4 KPH
 ;-------------------------------
@@ -137,7 +137,7 @@ adcRoutine3     ldaa        $008B               ; load bits value
 .LCD5E          subd        throttlePotMinimum  ; subtract TPmin from TPS
                 std         $00C8               ; store result in temporary location
                 bcs         .LCD69              ; branch if TPS is less than TPmin
-                
+
                 subd        #$0007              ; TPS is greater so subtract another 7
                 bcc         .LCD5B              ; TPS still greater so branch->jump->CE09 (below)
 ;----------------------------
@@ -148,7 +148,7 @@ adcRoutine3     ldaa        $008B               ; load bits value
                 bita        #$01                ; test X0086.0
                 sei                             ; set int mask (cleared at XCE06)
                 bne         .LCD8F              ; branch ahead if X0086.0 is set
-                
+
                 ldx         $C1E3               ; data value is $FFEC (minus 20)
                 stx         idleControlValue    ; reset 'idleControlValue' to -20
                 ldab        $0088
@@ -194,7 +194,7 @@ adcRoutine3     ldaa        $008B               ; load bits value
 ; This is unused code
 ;-------------------------------
 .unused         ldab        bits_2038
-                orab        #$02  
+                orab        #$02
                 stab        bits_2038
                 ldaa        $0086
                 bra         .LCDFC
@@ -237,11 +237,11 @@ adcRoutine3     ldaa        $008B               ; load bits value
 ;------------------------------------------------
 .LCE09          subd        #$0005              ; subtract another 5 from TPS reading
                 bcs         .LCE55              ; branch down if carry set
-                
+
                 ldaa        bits_008D
                 bita        #$10                ; test bits_008D.4 (usually zero)
                 beq         .LCE23
-                
+
                 anda        #$EF                ; clr  bits_008D.4
                 staa        bits_008D
                 ldd         #$0000
@@ -253,7 +253,7 @@ adcRoutine3     ldaa        $008B               ; load bits value
 .LCE23          ldaa        $0086
                 bita        #$01                ; test 0086.0
                 beq         .LCE30
-                
+
                 clrb
                 stab        tpsClosedLoopCntr   ; counts to 19, can be reset to zero or 255
                 ldx         throttlePotMinimum
@@ -395,19 +395,19 @@ adcRoutine3     ldaa        $008B               ; load bits value
                 ldaa        $0C,x               ; load value fron 2nd row of table
                 cmpa        #$03                ; compare value with #03
                 bcs         .LCF8C              ; skip fueling adjustment if engine is cold
-                
+
                 std         $00C8               ; store X00C8 = value from table, X00C9 = zero
-                
+
 ;------------------------------------
 ; Timer 1 (Right Bank, same polarity)
 ;------------------------------------
                 ldaa        timerCntrlReg1      ; Timer Control Reg 1
                 anda        #$FE                ; clr OLVL1 (P21 --> Right or Even Injector Bank)
                 staa        timerCntrlReg1
-                ldaa        timerStsReg         ; 
+                ldaa        timerStsReg         ;
                 bita        #$08                ; test output compare flag (OCF1) for right bank
                 bne         .LCF32              ; branch ahead if OCF1 is high (injectors are open)
-                
+
 ;----------------------------
 ; Injectors are closed
 ;----------------------------
@@ -478,8 +478,8 @@ adcRoutine3     ldaa        $008B               ; load bits value
                 std         ocr3high            ; and store it in the output compare reg
                 cmpa        timerStsReg
                 std         ocr3high            ; this sequence clears OCF1
-                
-                
+
+
 ;----------------------------
 .LCF8C          cli                             ; clear interrupt mask
                 bra         .LCF98

@@ -28,7 +28,7 @@ setTempTPFaults psha
                 std         faultSlowDownCount
                 pula
                 rts
-                
+
 .okToSetFaults  pula
                 cmpa        #$76
                 beq         .setTPFault17
@@ -42,27 +42,27 @@ setTempTPFaults psha
 ;---------------------------------------------------------------------------------
 ELSE    ; Griffith
 ;---------------------------------------------------------------------------------
-setTempTPFaults	ldab	    $00D1
-			    beq		    .okToSetFaults
-			    incb
-			    stab	    $00D1
-			    rts
+setTempTPFaults ldab        $00D1
+                beq         .okToSetFaults
+                incb
+                stab        $00D1
+                rts
 
-.okToSetFaults  cmpa	    #$76
-		        beq		    .setTPFault17
-		        cmpa	    $C0CD	            ; data value is $70
+.okToSetFaults  cmpa        #$76
+                beq         .setTPFault17
+                cmpa        $C0CD               ; data value is $70
                 beq         .setCTFault14
-		        cmpa	    #$FF
-		        beq		    .setMafFaultFF		; MAF fault (replaced by DTC 12)
-		        cmpa	    #$71
+                cmpa        #$FF
+                beq         .setMafFaultFF      ; MAF fault (replaced by DTC 12)
+                cmpa        #$71
                 beq         .setFTFault15
-		        cmpa	    #$01
+                cmpa        #$01
                 beq         .setTPFault18
-		        cmpa	    #$02
-		        beq		    .setTPFault19		; branch to TP Fault Code 19
-		        rts
+                cmpa        #$02
+                beq         .setTPFault19       ; branch to TP Fault Code 19
+                rts
 ;---------------------------------------------------------------------------------
-ENDC                
+ENDC
 
 
 .setTPFault17   ldab        faultBits_4A
@@ -74,18 +74,18 @@ ENDC
                 orab        #$08                ; Set ECT Sensor Fault Code 14
                 stab        faultBits_4A
                 rts
-                
+
 IF BUILD_R3360_AND_LATER
                 ; nothing
 ELSE
 
-.setMafFaultFF	ldab	    faultBits_49
-			    orab	    #$40		        ; set MAF fault bit
-			    stab	    faultBits_49
-			    ldab	    $0087
-			    orab	    #$02		        ; set MAF fault bit
-			    stab	    $0087
-			    rts
+.setMafFaultFF  ldab        faultBits_49
+                orab        #$40                ; set MAF fault bit
+                stab        faultBits_49
+                ldab        $0087
+                orab        #$02                ; set MAF fault bit
+                stab        $0087
+                rts
 ENDC
 
 
@@ -103,10 +103,10 @@ IF BUILD_R3360_AND_LATER
                 ; nothing
 ELSE
 
-.setTPFault19	ldab	    faultBits_4A		; value 02 (fault code 19?)
-			    orab	    #$40		        ; removed from R3526 code
-			    stab	    faultBits_4A
-			    rts
+.setTPFault19   ldab        faultBits_4A        ; value 02 (fault code 19?)
+                orab        #$40                ; removed from R3526 code
+                stab        faultBits_4A
+                rts
 ENDC
 
 ;---------------------------------------------------------------------------------
@@ -117,10 +117,10 @@ ENDC
 
 LEE12           ldab        iacMotorStepCount   ; absolute value of stepper mtr adjustment
                 bne         .LEE28              ; return if iacMotorStepCount is not zero
-                
+
                 ldab        iacvValue2
                 beq         .LEE28              ; return if iacvValue2 is zero
-                
+
                 stab        iacMotorStepCount   ; store iacvValue2 as iacMotorStepCount
                 ldab        $008A
                 orab        #$01                ; set X008A.0 (stepper mtr direction, 1 = close)
