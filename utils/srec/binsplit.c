@@ -26,7 +26,7 @@
 
 #define HEADER1 "\nBINSPLIT " SREC_VER " - Split a binary file into 2 or 4 interleaved pieces.\n"
 
-int verbose = true;
+bool verbose = true;
 int num_files = 2;
 
 char *infilename;

@@ -35,7 +35,7 @@ uint32_t max_addr = 0;
 uint32_t min_addr = 0;
 
 uint8_t filler = 0xff;
-int verbose = true;
+bool verbose = true;
 
 /***************************************************************************/
 
@@ -58,13 +58,13 @@ void parse(int scan, uint32_t *max, uint32_t *min)
 	int i, j;
 	char line[LINE_LEN] = "";
 	uint32_t address;
-	int rec_type, addr_bytes, byte_count;
-	uint8_t c;
-	uint8_t buf[32];
+	uint32_t rec_type, addr_bytes, byte_count;
+	char c;
+	uint8_t buf[256];
 
 	do
 	{
-		if(fgets(line, LINE_LEN, infile));
+		if(fgets(line, LINE_LEN, infile)) {}
 
 		if (line[0] == 'S')								/* an S-record */
 		{
@@ -79,10 +79,10 @@ void parse(int scan, uint32_t *max, uint32_t *min)
 				{
 					c = line[i];
 					address <<= 4;
-					address += char_to_uint(c);
+					address += char_to_uint8(c);
 				}
 
-				byte_count = (char_to_uint(line[2]) << 4) + char_to_uint(line[3]);
+				byte_count = (char_to_uint8(line[2]) << 4) + char_to_uint8(line[3]);
 				byte_count -= (addr_bytes + 1);
 
 				if (scan)
@@ -98,12 +98,12 @@ void parse(int scan, uint32_t *max, uint32_t *min)
 					address -= min_addr;
 
 					if (verbose)
-						fprintf(stderr, "Writing %d bytes at %08X\r", byte_count, address);
+						fprintf(stderr, "Writing %3u bytes at %08X\r", byte_count, address);
 
 					j = 0;
 					for (i = (addr_bytes * 2) + 4; i < (addr_bytes * 2) + (byte_count * 2) + 4; i += 2)
 					{
-						buf[j] = (char_to_uint(line[i]) << 4) + char_to_uint(line[i+1]);
+						buf[j] = (char_to_uint8(line[i]) << 4) + char_to_uint8(line[i+1]);
 						j++;
 					}
 					fseek(outfile, address, SEEK_SET);
@@ -118,6 +118,7 @@ void parse(int scan, uint32_t *max, uint32_t *min)
 }
 
 /***************************************************************************/
+#define BLOCK_SIZE 512
 
 int process(void)
 {
@@ -126,7 +127,7 @@ int process(void)
 	uint32_t pmax = 0;
 	uint32_t pmin = 0xffffffff;
 
-	uint8_t buf[32];
+	uint8_t buf[BLOCK_SIZE];
 
 	if (verbose)
 	{
@@ -141,23 +142,23 @@ int process(void)
 	min_addr = min(min_addr, pmin);
 	max_addr = max(pmax, min_addr + max_addr);
 
-	blocks = (max_addr - min_addr + 1) / 32;
-	remain = (max_addr - min_addr + 1) % 32;
+	blocks = (max_addr - min_addr + 1) / BLOCK_SIZE;
+	remain = (max_addr - min_addr + 1) % BLOCK_SIZE;
 
 	if (verbose)
 	{
 		fprintf(stderr, "Minimum address  = %Xh\n", min_addr);
 		fprintf(stderr, "Maximum address  = %Xh\n", max_addr);
 		i = max_addr - min_addr + 1;
-		fprintf(stderr, "Binary file size = %d (%Xh) bytes.\n", i, i);
+		fprintf(stderr, "Binary file size = %u (%Xh) bytes.\n", i, i);
 	}
 
 	if ((outfile = fopen(outfilename, "wb")) != NULL)
 	{
-		for (i = 0; i < 32; i++)
+		for (i = 0; i < BLOCK_SIZE; i++)
 			buf[i] = filler;
 		for (i = 0; i < blocks; i++)
-			fwrite(buf, 1, 32, outfile);
+			fwrite(buf, 1, BLOCK_SIZE, outfile);
 		fwrite(buf, 1, remain, outfile);
 
 		parse(false, &pmax, &pmin);
@@ -165,7 +166,7 @@ int process(void)
 	}
 	else
 	{
-		fprintf(stderr, "Cant create output file %s.\n", outfilename);
+		fprintf(stderr, "Can't create output file %s.\n", outfilename);
 		return(1);
 	}
 

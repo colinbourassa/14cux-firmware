@@ -23,9 +23,9 @@
 
 /***************************************************************************/
 
-unsigned int char_to_uint(char c)
+uint8_t char_to_uint8(char c)
 {
-	int res = 0;
+	uint8_t res = 0;
 
 	if (c >= '0' && c <= '9')
 		res = (c - '0');
@@ -49,7 +49,7 @@ uint32_t str_to_uint32(char *s)
 	{
 		c = s[i];
 		res <<= 4;
-		res += char_to_uint(c);
+		res += char_to_uint8(c);
 	}
 
 	return(res);

@@ -31,10 +31,10 @@ FILE *infile;
 uint32_t addr_offset = 0;
 uint32_t begin_addr;
 uint32_t end_addr;
-int addr_bytes = 2;
-int do_headers = true;
-int verbose = true;
-int line_length = 32;
+uint32_t addr_bytes = 2;
+bool do_headers = true;
+bool verbose = true;
+uint32_t line_length = 32;
 
 
 /***************************************************************************/
@@ -61,8 +61,8 @@ void process(void)
 {
 	int i;
 	uint32_t max_addr, address;
-	int byte_count, this_line;
-	unsigned char checksum;
+	uint32_t byte_count, this_line;
+	uint8_t checksum;
 	uint32_t c;
 	int record_count = 0;
 
@@ -87,7 +87,7 @@ void process(void)
 		fprintf(stderr, "End address     = %Xh\n", end_addr);
 		fprintf(stderr, "Address offset  = %Xh\n", addr_offset);
 		fprintf(stderr, "Maximum address = %Xh\n", max_addr);
-		fprintf(stderr, "Address bytes   = %d\n", addr_bytes);
+		fprintf(stderr, "Address bytes   = %u\n", addr_bytes);
 	}
 
 	if (do_headers)
@@ -102,7 +102,7 @@ void process(void)
 
 		this_line = min(line_length, (max_addr - address) + 1);
 		byte_count = (addr_bytes + this_line + 1);
-		printf("S%d%02X", addr_bytes - 1, byte_count);
+		printf("S%u%02X", addr_bytes - 1, byte_count);
 
 		checksum = byte_count;
 
@@ -113,7 +113,7 @@ void process(void)
 			checksum += c;
 		}
 
-		if(fread(buf, 1, this_line, infile));
+		if(fread(buf, 1, this_line, infile)) {}
 
 		for (i = 0; i < this_line; i++)
 		{
@@ -146,7 +146,7 @@ void process(void)
 		}
 
 		byte_count = (addr_bytes + 1);
-		printf("S%d%02X", 11 - addr_bytes, byte_count);
+		printf("S%u%02X", 11 - addr_bytes, byte_count);
 
 		checksum = byte_count;
 
@@ -169,8 +169,8 @@ int main(int argc, char *argv[])
 {
 	int i;
 	uint32_t size;
-	int offset_specified = false;
-	int end_specified = false;
+	bool offset_specified = false;
+	bool end_specified = false;
 
 	for (i = 1; i < argc; i++)
 	{
@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
 
 		else if (!strcmp(argv[i], "-a"))
 		{
-			sscanf(argv[++i], "%d", &addr_bytes);
+			sscanf(argv[++i], "%u", &addr_bytes);
 			addr_bytes = max(2, addr_bytes);
 			addr_bytes = min(4, addr_bytes);
 			continue;
@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
 
 		else if (!strcmp(argv[i], "-l"))
 		{
-			sscanf(argv[++i], "%d", &line_length);
+			sscanf(argv[++i], "%u", &line_length);
 			line_length = max(8, line_length);
 			line_length = min(32, line_length);
 			continue;
